@@ -4,11 +4,12 @@ import numpy as np
 
 def format_api_data(year):
     # Reading in data
-    advanced = pd.read_csv('Data/api_data_' + str(year) + '_advanced.csv', index_col = 0)
-    traditional_2007 = pd.read_csv('Data/api_data_' + str(year) + '_traditional.csv', index_col = 0)
+    advanced = pd.read_csv('data/api_data_' + str(year) + '_advanced.csv', index_col = 0)
+    traditional = pd.read_csv('data/api_data_' + str(year) + '_traditional.csv', index_col = 0)
 
     #Merging data, dropping unnecessary columns, renaming columns
-    merged = pd.merge(traditional_2007, advanced_2007, on = ['GAME_ID', 'TEAM_NAME'])
+
+    merged = pd.merge(traditional, advanced, on = ['GAME_ID', 'TEAM_NAME'])
     merged.drop(['TEAM_ABBREVIATION_x', 'TEAM_CITY_x', 'MIN_x', 'TEAM_ID_y', 'TEAM_ABBREVIATION_y', 'TEAM_CITY_y',
                 'MIN_y'], axis = 1, inplace = True)
     merged.columns = ['GAME_ID', 'TEAM_ID', 'TEAM_NAME', 'FGM', 'FGA', 'FG_PCT', 'FG3M',
@@ -138,6 +139,7 @@ def retrieve_and_format_odds(year, formatted_api_data):
     merged_odds['Team_1_losses'] = 0
     merged_odds['Team_2_wins'] = 0
     merged_odds['Team_2_losses'] = 0
+    record_dict = {}
     teams = list(merged_odds.Team_x.unique())
     for team in teams:
         record_dict[team + '_wins'] = 0.0
@@ -186,8 +188,51 @@ def retrieve_and_format_odds(year, formatted_api_data):
     print(merged_odds.shape)
     return merged_odds
 
-def format_final(year, formatted_odds, formatted_api_data):
-    # Functions used in apply
+def format_merged(year, formatted_odds, formatted_api_data):
+    team_map = {
+        'Philadelphia' : '76ers',
+        'Boston' : 'Celtics',
+        'OklahomaCity' : 'Thunder',
+        'Oklahoma City' : 'Thunder',
+        'GoldenState' : 'Warriors',
+        'Golden State' : 'Warriors',
+        'Memphis' : 'Grizzlies',
+        'Milwaukee' : 'Bucks',
+        'Miami' : 'Heat',
+        'Orlando' : 'Magic',
+        'Brooklyn' : 'Nets',
+        'NewJersey' : 'Nets',
+        'Detroit' : 'Pistons',
+        'Atlanta' : 'Hawks',
+        'Cleveland' : 'Cavaliers',
+        'Toronto' : 'Raptors',
+    #     'NewOrleans' : 'Pelicans',
+    #     'New Orleans' : 'Pelicans',
+        'New Orleans' : 'Hornets',
+        'NewOrleans' : 'Hornets',
+        'Houston' : 'Rockets',
+        'Minnesota' : 'Timberwolves',
+        'SanAntonio' : 'Spurs',
+        'San Antonio' : 'Spurs',
+        'Utah' : 'Jazz',
+        'Sacramento' : 'Kings',
+        'Dallas' : 'Mavericks',
+        'Phoenix' : 'Suns',
+        'Denver' : 'Nuggets',
+        'Chicago' : 'Bulls',
+        'Washington' : 'Wizards',
+        'LALakers' : 'Lakers',
+        'LA Lakers' : 'Lakers',
+        'Portland' : 'Trail Blazers',
+        #'Charlotte' : 'Hornets',
+        'Charlotte' : 'Bobcats',
+        'NewYork' : 'Knicks',
+        'New York' : 'Knicks',
+        'LAClippers' : 'Clippers',
+        'LA Clippers' : 'Clippers',
+        'Indiana' : 'Pacers',
+        'Seattle' : 'SuperSonics'}
+
     def date_func(x):
         first_half = x[:-2]
         second_half = x[-2:]
@@ -509,6 +554,22 @@ def format_final(year, formatted_odds, formatted_api_data):
     final_stats.dropna(inplace = True)
     final_stats.reset_index(drop = True, inplace = True)
     print(final_stats.shape)
-    final_stats.to_csv('final_stats_' + str(year) + '.csv')
+    #final_stats.to_csv('final_stats_' + str(year) + '.csv')
     print('Ran all the way through')
+    return final_stats
+
+def format_final_stats(year, formatted_merged, formatted_odds):
+    formatted_odds['Winner'] = 'Empty'
+    for index, row in formatted_odds.iterrows():
+        if row.Final_x>row.Final_y:
+            formatted_odds.loc[index, 'Winner'] = row.Team_x
+        else:
+            formatted_odds.loc[index, 'Winner'] = row.Team_y
+    df_winner = formatted_odds[['GAME_ID', 'Winner']]
+    attempt = pd.merge(formatted_merged, df_winner, left_on = 'Game_ID', right_on = 'GAME_ID')
+    attempt['Team1_Won'] = 0
+    for index, row in attempt.iterrows():
+        if row.Winner==row.Team1:
+            attempt.loc[index, 'Team1_Won'] = 1
+    attempt.to_csv('data/final_stats_' + str(year) + '.csv')
     return

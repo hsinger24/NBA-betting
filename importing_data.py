@@ -10,7 +10,7 @@ def retrieve_advanced_stats(year, continue_value = None):
         game_ids = list(range(1,1231))
         games_df_2007 = pd.DataFrame()
     if continue_value is not None:
-        games_df_2007 = pd.read_csv('Data/api_data_' + str(year) + '_advanced.csv', index_col = 0)
+        games_df_2007 = pd.read_csv('data/api_data_' + str(year) + '_advanced.csv', index_col = 0)
         game_ids = list(range(continue_value,1231))
     for game in game_ids:
         try:
@@ -30,7 +30,7 @@ def retrieve_advanced_stats(year, continue_value = None):
             print(game, 'advanced')
             break
     games_df_2007.reset_index(drop = True, inplace = True)
-    games_df_2007.to_csv('api_data_' + str(year) + '_advanced.csv')
+    games_df_2007.to_csv('data/api_data_' + str(year) + '_advanced.csv')
     return
 
 def retrieve_traditional_stats(year, continue_value = None):
@@ -38,7 +38,7 @@ def retrieve_traditional_stats(year, continue_value = None):
         game_ids = list(range(1,1231))
         games_df_2007 = pd.DataFrame()
     if continue_value is not None:
-        games_df_2007 = pd.read_csv('Data/api_data_' + str(year) + '_traditional.csv', index_col = 0)
+        games_df_2007 = pd.read_csv('data/api_data_' + str(year) + '_traditional.csv', index_col = 0)
         game_ids = list(range(continue_value,1231))
     for game in game_ids:
         try:
@@ -58,6 +58,6 @@ def retrieve_traditional_stats(year, continue_value = None):
             print(game, 'traditional')
             break
     games_df_2007.reset_index(drop = True, inplace = True)
-    games_df_2007.to_csv('api_data_' + str(year) + '_traditional.csv')
+    games_df_2007.to_csv('data/api_data_' + str(year) + '_traditional.csv')
     return
 
