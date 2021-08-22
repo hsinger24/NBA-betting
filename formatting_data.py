@@ -94,10 +94,10 @@ def retrieve_and_format_odds(year, formatted_api_data):
         'Atlanta' : 'Hawks',
         'Cleveland' : 'Cavaliers',
         'Toronto' : 'Raptors',
-    #     'NewOrleans' : 'Pelicans',
-    #     'New Orleans' : 'Pelicans',
-        'New Orleans' : 'Hornets',
-        'NewOrleans' : 'Hornets',
+        'NewOrleans' : 'Pelicans',
+        'New Orleans' : 'Pelicans',
+        # 'New Orleans' : 'Hornets',
+        # 'NewOrleans' : 'Hornets',
         'Houston' : 'Rockets',
         'Minnesota' : 'Timberwolves',
         'SanAntonio' : 'Spurs',
@@ -112,8 +112,8 @@ def retrieve_and_format_odds(year, formatted_api_data):
         'LALakers' : 'Lakers',
         'LA Lakers' : 'Lakers',
         'Portland' : 'Trail Blazers',
-        #'Charlotte' : 'Hornets',
-        'Charlotte' : 'Bobcats',
+        'Charlotte' : 'Hornets',
+        # 'Charlotte' : 'Bobcats',
         'NewYork' : 'Knicks',
         'New York' : 'Knicks',
         'LAClippers' : 'Clippers',
@@ -131,7 +131,10 @@ def retrieve_and_format_odds(year, formatted_api_data):
     merged_odds = pd.merge(evens, odds, left_on = evens.index, right_on = odds.index)
 
     # Only getting regular season data
-    merged_odds = merged_odds[:1230]
+    if year==2011:
+        merged_odds = merged_odds[:990]
+    else:
+        merged_odds = merged_odds[:1230]
     merged_odds.drop('key_0', axis = 1, inplace = True)
 
     # Tracking wins and losses for purpose of ultimately matching Game ID
@@ -571,5 +574,6 @@ def format_final_stats(year, formatted_merged, formatted_odds):
     for index, row in attempt.iterrows():
         if row.Winner==row.Team1:
             attempt.loc[index, 'Team1_Won'] = 1
+    print(attempt.shape)
     attempt.to_csv('data/final_stats_' + str(year) + '.csv')
     return
