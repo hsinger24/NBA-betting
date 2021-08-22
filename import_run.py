@@ -2,7 +2,7 @@ from formatting_data import *
 from importing_data import *
 import pandas as pd
 
-year = 2009
+year = 2010
 # Run if we need to call API to get data and save to Data folder
 
 # retrieve_advanced_stats(year = year, continue_value = None)
