@@ -68,19 +68,25 @@ adaBag = train(training_data,
                trControl = ctrl,
                method='AdaBag')
 predictions_adaBag = predict(object = adaBag, test_data, type = 'raw')
-prediction_accuracy_adaBag = mean(predictions_adaBag == test_target) # Runnning
+prediction_accuracy_adaBag = mean(predictions_adaBag == test_target) # 64.3%
 # Bayesian Additive Regression Trees
 bartMachine = train(training_data,
                training_target,
                trControl = ctrl,
                method='bartMachine')
+predictions_bartMachine = predict(object = bartMachine, test_data, type = 'raw')
+prediction_accuracy_bartMachine= mean(predictions_bartMachine == test_target) # Did not work
 # Diagonal Discriminant Analysis
 dda = train(training_data,
             training_target,
             trControl = ctrl,
             method='dda')
+predictions_dda = predict(object = dda, test_data, type = 'raw')
+prediction_accuracy_dda= mean(predictions_dda == test_target) # Did not work
 # C4.5-like Trees
 c_trees = train(training_data,
                 training_target,
                 trControl = ctrl,
                 method='J48')
+predictions_c_trees = predict(object = c_trees, test_data, type = 'raw')
+prediction_accuracy_c_trees= mean(predictions_c_trees == test_target) # 64%
