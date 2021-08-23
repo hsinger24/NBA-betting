@@ -4,7 +4,8 @@ library(MASS)
 library(dplyr)
 library(caret)
 library(reshape2)
-
+library(xgboost)
+library(adabag)
 
 ########## Importing data and splitting test and train ##########
 
@@ -34,6 +35,8 @@ test_target = Team1_Won[!train]
 
 ########## ML ##########
 
+# List of potential methods: https://rdrr.io/cran/caret/man/models.html
+
 # Setting hyperparameters
 set.seed(5)
 ctrl = trainControl(method = 'repeatedcv', number = 10, savePrediction = 'final', classProbs = T)
@@ -44,19 +47,40 @@ logistic = train(training_data,
       method='glm',
       family=binomial())
 predictions_logistic = predict(object = logistic, test_data, type = 'raw')
-prediction_accuracy_logistic = mean(predictions == test_target)
+prediction_accuracy_logistic = mean(predictions == test_target) # 65.5%
 # Random Forest
 forest = train(training_data,
                training_target,
                trControl = ctrl,
                method='rf')
 predictions_forest = predict(object = forest, test_data, type = 'raw')
-prediction_accuracy_forest = mean(predictions_forest == test_target)
+prediction_accuracy_forest = mean(predictions_forest == test_target) # 61.5%
 # XGBOOST
 xg = train(training_data,
                training_target,
                trControl = ctrl,
                method='xgbTree')
 predictions_xg = predict(object = xg, test_data, type = 'raw')
-prediction_accuracy_xg = mean(predictions_xg == test_target)
-               
+prediction_accuracy_xg = mean(predictions_xg == test_target) # Did not work
+# Bagged AdaBoost
+adaBag = train(training_data,
+               training_target,
+               trControl = ctrl,
+               method='AdaBag')
+predictions_adaBag = predict(object = adaBag, test_data, type = 'raw')
+prediction_accuracy_adaBag = mean(predictions_adaBag == test_target) # Runnning
+# Bayesian Additive Regression Trees
+bartMachine = train(training_data,
+               training_target,
+               trControl = ctrl,
+               method='bartMachine')
+# Diagonal Discriminant Analysis
+dda = train(training_data,
+            training_target,
+            trControl = ctrl,
+            method='dda')
+# C4.5-like Trees
+c_trees = train(training_data,
+                training_target,
+                trControl = ctrl,
+                method='J48')
