@@ -90,3 +90,23 @@ c_trees = train(training_data,
                 method='J48')
 predictions_c_trees = predict(object = c_trees, test_data, type = 'raw')
 prediction_accuracy_c_trees= mean(predictions_c_trees == test_target) # 64%
+# Tree Augmented Naive Bayes Classifier with Attribute Weighting
+awtan = train(training_data,
+              training_target,
+              trControl = ctrl,
+              method='awtan')
+predictions_awtan = predict(object = awtan, test_data, type = 'raw')
+prediction_accuracy_awtan= mean(predictions_awtan == test_target) # Did not work
+# Stochastic Gradient Boosting
+gbm = train(training_data,
+            training_target,
+            trControl = ctrl,
+            method='gbm')
+predictions_gbm = predict(object = gbm, test_data, type = 'raw')
+prediction_accuracy_gbm= mean(predictions_gbm == test_target) # 66.3
+# Stacked AutoEncoder Deep Neural Network
+
+  
+  
+
+
