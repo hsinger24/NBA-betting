@@ -4,8 +4,7 @@ library(MASS)
 library(dplyr)
 library(caret)
 library(reshape2)
-library(xgboost)
-library(adabag)
+library(fastDummies)
 
 ########## Importing data and splitting test and train ##########
 
@@ -104,9 +103,36 @@ gbm = train(training_data,
             method='gbm')
 predictions_gbm = predict(object = gbm, test_data, type = 'raw')
 prediction_accuracy_gbm= mean(predictions_gbm == test_target) # 66.3
-# Stacked AutoEncoder Deep Neural Network
+##### Stacked AutoEncoder Deep Neural Network #####
+# Formatting data for DNN
+training_data_dnn = data.frame(training_data)
+training_data_dnn$Team1_Days_Rest_Team = as.double(training_data_dnn$Team1_Days_Rest_Team)
+training_data_dnn$Team1_Days_Rest_Team_Opp = as.double(training_data_dnn$Team1_Days_Rest_Team_Opp)
+training_data_dnn$Team1_Days_Next.Game = as.double(training_data_dnn$Team1_Days_Next.Game)
+training_data_dnn$Team1_Days_Next.Game_Opp = as.double(training_data_dnn$Team1_Days_Next.Game_Opp)
+training_data_dnn$Team1_Wins = as.double(training_data_dnn$Team1_Wins)
+training_data_dnn$Team1_Wins_Opp = as.double(training_data_dnn$Team1_Wins_Opp)
+training_data_dnn$Team1_Losses = as.double(training_data_dnn$Team1_Losses)
+training_data_dnn$Team1_Losses_Opp = as.double(training_data_dnn$Team1_Losses_Opp)
+training_data_dnn$Team1_USG_PCT_Agg = as.double(training_data_dnn$Team1_USG_PCT_Agg)
+training_data_dnn$Team1_USG_PCT_Agg_Opp = as.double(training_data_dnn$Team1_USG_PCT_Agg_Opp)
 
-  
-  
+training_data_dnn = subset(training_data_dnn, select = -c(86,102))
+training_data_dnn = dummy_cols(training_data_dnn,  remove_most_frequent_dummy = T,
+                  remove_selected_columns = T)
 
 
+numerical = c()
+for (i in 1:ncol(training_data_dnn)) {
+  if (typeof(training_data_dnn[,i])=='double') {
+    numerical = append(numerical, colnames(training_data_dnn)[i])
+  }
+}
+norm.values = preProcess(training_data_dnn[, numerical], method = 'range')
+training_data_dnn[,numerical] = predict(norm.values, training_data_dnn[, numerical])
+
+# DNN
+dnn = train(training_data_dnn,
+               training_target,
+               trControl = ctrl,
+               method='dnn')
