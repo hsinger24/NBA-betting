@@ -28,11 +28,12 @@ train = (Game_ID<21800001)
 training_data = data[train, ]
 training_data = subset(training_data, select = -c(1,2,3,4,106))
 training_target = Team1_Won[train]
+training_target = factor(as.character(training_target), levels = c('0','1'), labels = c('L', 'W'))
 # Getting test data
 test_data = data[!train, ]
 test_data = subset(test_data, select = -c(1,2,3,4,106))
 test_target = Team1_Won[!train]
-
+test_target = factor(as.character(test_target), levels = c('0','1'), labels = c('L', 'W'))
 ########## ML ##########
 
 # List of potential methods: https://rdrr.io/cran/caret/man/models.html
@@ -47,7 +48,7 @@ logistic = train(training_data,
       method='glm',
       family=binomial())
 predictions_logistic = predict(object = logistic, test_data, type = 'raw')
-prediction_accuracy_logistic = mean(predictions == test_target) # 65.5%
+prediction_accuracy_logistic = mean(predictions_logistic == test_target) # 65.5%
 # Random Forest
 forest = train(training_data,
                training_target,
@@ -155,12 +156,30 @@ test_data_dnn[,numerical_test] = predict(norm.values, test_data[, numerical_test
 dnn = train(training_data_dnn,
                training_target,
                trControl = ctrl,
-               method='dnn')
+               method='dnn') # Runs through
 test_data_final = cbind(test_data_dnn, test_target)
 test_data_matrix = model.matrix(test_target~., data = test_data_final)[,-1]
 predictions_dnn = nn.predict(dnn, test_data_matrix) # Not working (yet)
 
 # Rotation Forest
+rotationForest = train(training_data,
+               training_target,
+               trControl = ctrl,
+               method='rotationForest')
+predictions_rotationForest = predict(object = rotationForest, test_data, type = 'raw')
+prediction_accuracy_rotationForest= mean(predictions_rotationForest == test_target) # Did not work
 # Robust SIMCA
+RSimca = train(training_data,
+               training_target,
+               trControl = ctrl,
+               method='RSimca')
+predictions_RSimca  = predict(object = RSimca , test_data, type = 'raw')
+prediction_accuracy_RSimca = mean(predictions_RSimca == test_target) # Did not work
 # Oblique Random Forest
+ORFlog = train(training_data,
+               training_target,
+               trControl = ctrl,
+               method='ORFlog ')
+predictions_ORFlog = predict(object = ORFlog, test_data, type = 'raw')
+prediction_accuracy_ORFlog = mean(predictions_ORFlog == test_target) # Did not work
 # Multilayer Perceptron Network with Weight Decay
