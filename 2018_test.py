@@ -93,10 +93,10 @@ for index, row in test_merged.iterrows():
                 payoff2 = test_merged.loc[index, 'Team2_Bet'] *(row.Team2_ML/100)
 
         # Passing over huge favorites
-        if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<-1000):
+        if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<-1500):
             test_merged.loc[index, 'Money_Tracker'] = 100000
             continue
-        if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<-1000):
+        if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<-1500):
             test_merged.loc[index, 'Money_Tracker'] = 100000
             continue
     
@@ -130,10 +130,10 @@ for index, row in test_merged.iterrows():
                 payoff2 = test_merged.loc[index, 'Team2_Bet'] *(row.Team2_ML/100)
         
          # Passing over huge favorites
-        if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<-1000):
+        if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<-1500):
             test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
             continue
-        if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<-1000):
+        if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<-1500):
             test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
             continue
         
