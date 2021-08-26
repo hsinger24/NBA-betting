@@ -577,3 +577,4 @@ def format_final_stats(year, formatted_merged, formatted_odds):
     print(attempt.shape)
     attempt.to_csv('data/final_stats_' + str(year) + '.csv')
     return
+
