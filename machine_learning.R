@@ -49,6 +49,7 @@ logistic = train(training_data,
       family=binomial())
 predictions_logistic = predict(object = logistic, test_data, type = 'raw')
 prediction_accuracy_logistic = mean(predictions_logistic == test_target) # 65.5%
+saveRDS(logistic, 'logistic_model.rds')
 # Random Forest
 forest = train(training_data,
                training_target,
@@ -105,6 +106,7 @@ gbm = train(training_data,
             method='gbm')
 predictions_gbm = predict(object = gbm, test_data, type = 'raw')
 prediction_accuracy_gbm= mean(predictions_gbm == test_target) # 66.3
+saveRDS(gbm, 'gbm_model.rds')
 ##### Stacked AutoEncoder Deep Neural Network #####
 # Formatting data for DNN (Training)
 training_data_dnn = data.frame(training_data)
