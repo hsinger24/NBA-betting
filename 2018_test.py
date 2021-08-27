@@ -65,8 +65,11 @@ test_merged['Team1_Bet'] = 0
 test_merged['Team2_Bet'] = 0
 test_merged['Money_Tracker'] = 0
 for index, row in test_merged.iterrows():
-    # Passing over rows where there is no perceived advatage
+    # Passing over rows where there is no/small perceived advatage
     if (row.Team1_KC == 0) & (row.Team2_KC == 0):
+        test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+        continue
+    if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<.01)) | ((row.Team1_Prob_Diff<0.01) & (row.Team2_Prob_Diff<0)):
         test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
         continue
 
