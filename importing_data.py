@@ -6,6 +6,15 @@ from nba_api.stats.endpoints import boxscoretraditionalv2
 from nba_api.stats.endpoints import cumestatsteam
 
 def retrieve_advanced_stats(year, continue_value = None):
+    """Retrieves advanced stats from NBA api for given year. NEED TO ADJUST GAME ID MANUALLY
+
+    Args:
+        year: the year of interest
+        continue_value: The value of game_id to start at if function did not run all the way through prior
+
+    Returns:
+        Advanced stats df for a given year
+    """
     if continue_value is None:
         game_ids = list(range(1,1231))
         games_df_2007 = pd.DataFrame()
@@ -34,6 +43,15 @@ def retrieve_advanced_stats(year, continue_value = None):
     return
 
 def retrieve_traditional_stats(year, continue_value = None):
+    """Retrieves traditional stats from NBA api for given year. NEED TO ADJUST GAME ID MANUALLY
+
+    Args:
+        year: the year of interest
+        continue_value: The value of game_id to start at if function did not run all the way through prior
+
+    Returns:
+        Traditional stats df for a given year
+    """
     if continue_value is None:
         game_ids = list(range(1,1231))
         games_df_2007 = pd.DataFrame()

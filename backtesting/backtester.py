@@ -33,7 +33,17 @@ def kelly_criterion_2(row):
         kc = ((p*b) - q) / b
         return kc/8
 
-def backtesting(year, starting_capital):
+def backtesting(year, starting_capital, ml_param):
+    """Backtests our model for a given year
+
+    Args:
+        year: The year in which we wish to backtest
+        starting_capital: The amount of capital simulated for the model at the beginning of the year
+        ml_param (must be negative): The cutoff point for large favorites not to bet on
+
+    Returns:
+        DataFrame object with all games bet on and keeps track of capital
+    """
     # Creating necessary columns
     test_merged = pd.read_csv('data/test_merged_' + str(year) + '.csv', index_col = 0)
     test_merged['Team1_ML'] = 0
@@ -97,10 +107,10 @@ def backtesting(year, starting_capital):
                     payoff2 = test_merged.loc[index, 'Team2_Bet'] *(row.Team2_ML/100)
 
             # Passing over huge favorites
-            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<-1500):
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<ml_param):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital
                 continue
-            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<-1500):
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<ml_param):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital
                 continue
         
@@ -134,10 +144,10 @@ def backtesting(year, starting_capital):
                     payoff2 = test_merged.loc[index, 'Team2_Bet'] *(row.Team2_ML/100)
             
             # Passing over huge favorites
-            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<-1500):
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<ml_param):
                 test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
                 continue
-            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<-1500):
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<ml_param):
                 test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
                 continue
             

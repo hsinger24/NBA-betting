@@ -3,6 +3,14 @@ import datetime as dt
 import numpy as np
 
 def format_api_data(year):
+    """Calls in the advanced and traditional API data for a given year, then formats the data for the next step
+
+    Args:
+       year: the year of API data we want to retrieve
+
+    Returns:
+        DataFrame with formatted API data
+    """
     # Reading in data
     advanced = pd.read_csv('data/api_data_' + str(year) + '_advanced.csv', index_col = 0)
     traditional = pd.read_csv('data/api_data_' + str(year) + '_traditional.csv', index_col = 0)
@@ -76,6 +84,15 @@ def format_api_data(year):
     return final
 
 def retrieve_and_format_odds(year, formatted_api_data):
+    """Retrieves and formats odds data for a given year.
+
+    Args:
+        year: the year of interest
+        formatted_api_data: The returned df from the format_api_data function for the same year
+
+    Returns:
+        DataFrame with formatted odds data
+    """
     # Team map to change team names to match with API data
     team_map = {
         'Philadelphia' : '76ers',
@@ -192,6 +209,16 @@ def retrieve_and_format_odds(year, formatted_api_data):
     return merged_odds
 
 def format_merged(year, formatted_odds, formatted_api_data):
+    """Further formatting. An intermediate step. Includes calculating B2B, rest, and aggregated stats
+
+    Args:
+        year: the year of interest
+        formatted_odds: The returned df from the retrieve_and_format_odds function from the same year
+        formatted_api_data: The returned df from the format_api_data function for the same year
+
+    Returns:
+        DataFrame with further formatted data
+    """
     team_map = {
         'Philadelphia' : '76ers',
         'Boston' : 'Celtics',
@@ -562,6 +589,16 @@ def format_merged(year, formatted_odds, formatted_api_data):
     return final_stats
 
 def format_final_stats(year, formatted_merged, formatted_odds):
+    """Adds a winner column to the formatted data
+
+    Args:
+        year: the year of interest
+        formatted_merged: Returned value from the format_merged function for the given year
+        formatted_odds: Returned value from the retrieve_and_format_odds function for the given year
+
+    Returns:
+        Final stats df for a given year
+    """
     formatted_odds['Winner'] = 'Empty'
     for index, row in formatted_odds.iterrows():
         if row.Final_x>row.Final_y:
