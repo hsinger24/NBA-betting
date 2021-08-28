@@ -34,7 +34,7 @@ def kelly_criterion_2(row):
         return kc/8
 
 # Creating necessary columns
-test_merged = pd.read_csv('data/test_merged.csv', index_col = 0)
+test_merged = pd.read_csv('../data/test_merged.csv', index_col = 0)
 test_merged['Team1_ML'] = 0
 test_merged['Team2_ML'] = 0
 for index, row in test_merged.iterrows():
