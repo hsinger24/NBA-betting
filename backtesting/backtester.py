@@ -200,21 +200,47 @@ def backtesting_win_pct(backtester):
     backtester = backtester[backtester.Bet_Won>-1]
     return backtester['Bet_Won'].mean()
 
-def backtesting_calibration(backtester):
+def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
     """Determines how well calibrated the model's probabilities are
 
     Args:
         backtester: result of backtesting function from a given year
-
+        prob_calibration: If true, will return the probability that team 1 wins by 10% win_prob bins
+        kc_bins: If true, will return overall winnings/losses by KC bins
     Returns:
-        Calibration df
+        Depending on which argument we put to be true
     """
 
-    bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-    labels = ['<10%', '10-20%', '20-30%', '30-40%', '40-50%', '50-60%', '60-70%', '70-80%', '80-90%', '>90%']
-    backtester['Bin'] = pd.cut(backtester['Team1_Win_Prob'], bins = bins, labels = labels)
-    grouped = backtester.groupby('Bin')['Team1_Win_Prob'].mean()
-    return grouped
+    # Tests how often team 1 wins binned by prediction probability
+    if prob_calibration:
+        # Binnning by 10% Team_1_Win_Prob
+        bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+        labels = ['<10%', '10-20%', '20-30%', '30-40%', '40-50%', '50-60%', '60-70%', '70-80%', '80-90%', '>90%']
+        backtester['Bin'] = pd.cut(backtester['Team1_Win_Prob'], bins = bins, labels = labels)
+
+        # Grouping by bin
+        grouped = backtester.groupby('Bin')['Team1_Win_Prob'].mean()
+        return grouped
+
+    if kc_bins:
+        backtester = backtester[backtester.Bet_Won>-1]
+
+        #Getting winnings/loss for each game
+        backtester['Games_Winnings'] = 0
+        backtester.reset_index(drop = True, inplace = True)
+        for index, row in backtester.iterrows():
+            if index == 0:
+                continue
+            else:
+                backtester.loc[index, 'Games_Winnings'] = backtester.loc[index, 'Money_Tracker'] - backtester.loc[(index-1), 'Money_Tracker']
+
+        #Binning by KC, returning winnings/losses by group
+        backtester['Overall_KC'] = backtester.Team1_KC + backtester.Team2_KC
+        bins = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 1]
+        labels = ['<1%', '1-2%', '2-3%', '3-4%', '4-5%', '5-6%', '6-7%', '7-8%', '8-9%', '9-10%', '>10%']
+        backtester['KC_Bins'] = pd.cut(backtester['Overall_KC'], bins = bins, labels = labels)
+        grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
+        return grouped
 
 backtester = backtesting(2018, 100000, -1500, save_file=False)
-print(backtesting_calibration(backtester))
+print(backtesting_bins(backtester, kc_bins = True))
