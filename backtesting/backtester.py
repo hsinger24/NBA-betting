@@ -33,13 +33,14 @@ def kelly_criterion_2(row):
         kc = ((p*b) - q) / b
         return kc/8
 
-def backtesting(year, starting_capital, ml_param):
+def backtesting(year, starting_capital, ml_param, save_file = True):
     """Backtests our model for a given year
 
     Args:
         year: The year in which we wish to backtest
         starting_capital: The amount of capital simulated for the model at the beginning of the year
         ml_param (must be negative): The cutoff point for large favorites not to bet on
+        save_file: True if you want to save file to data folder. If false, will return the dataframe
 
     Returns:
         DataFrame object with all games bet on and keeps track of capital
@@ -75,6 +76,7 @@ def backtesting(year, starting_capital, ml_param):
     test_merged['Team1_Bet'] = 0
     test_merged['Team2_Bet'] = 0
     test_merged['Money_Tracker'] = 0
+    test_merged['Bet_Won'] = 0
     for index, row in test_merged.iterrows():
         # Passing over rows where there is no/small perceived advatage
         if (row.Team1_KC == 0) & (row.Team2_KC == 0):
@@ -123,6 +125,7 @@ def backtesting(year, starting_capital, ml_param):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital - test_merged.loc[index, 'Team1_Bet']
             if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_Won == 'W'):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital - test_merged.loc[index, 'Team2_Bet']
+    
         else:
 
             # Setting bet amount
@@ -160,5 +163,58 @@ def backtesting(year, starting_capital, ml_param):
                 test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker'] - test_merged.loc[index, 'Team1_Bet']
             if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_Won == 'W'):
                 test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker'] - test_merged.loc[index, 'Team2_Bet']
-    test_merged.to_csv('data/test_kc_'+str(year)+'.csv')
-    return
+    
+    # Tracking binary bet result
+    for index, row in test_merged.iterrows():
+        if index>0:
+            last_game_capital = test_merged.loc[(index-1), 'Money_Tracker']
+            if row.Money_Tracker>last_game_capital:
+                test_merged.loc[index, 'Bet_Won'] = 1
+            else:
+                pass
+            if row.Money_Tracker==last_game_capital:
+                test_merged.loc[index, 'Bet_Won'] = -1
+        if index==0:
+            if row.Money_Tracker>starting_capital:
+                test_merged.loc[index, 'Bet_Won'] = 1
+            else:
+                pass
+            if row.Money_Tracker==starting_capital:
+                test_merged.loc[index, 'Bet_Won'] = -1
+
+    # Saving file if save_file argument is true
+    if save_file:
+        test_merged.to_csv('data/test_kc_'+str(year)+'.csv')
+    else:
+        return test_merged
+
+def backtesting_win_pct(backtester):
+    """Finds win pct from a df where bet tracking is completed
+
+    Args:
+        backtester: result of backtesting function from a given year
+
+    Returns:
+        Win percentage of bets from that year
+    """
+    backtester = backtester[backtester.Bet_Won>-1]
+    return backtester['Bet_Won'].mean()
+
+def backtesting_calibration(backtester):
+    """Determines how well calibrated the model's probabilities are
+
+    Args:
+        backtester: result of backtesting function from a given year
+
+    Returns:
+        Calibration df
+    """
+
+    bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    labels = ['<10%', '10-20%', '20-30%', '30-40%', '40-50%', '50-60%', '60-70%', '70-80%', '80-90%', '>90%']
+    backtester['Bin'] = pd.cut(backtester['Team1_Win_Prob'], bins = bins, labels = labels)
+    grouped = backtester.groupby('Bin')['Team1_Win_Prob'].mean()
+    return grouped
+
+backtester = backtesting(2018, 100000, -1500, save_file=False)
+print(backtesting_calibration(backtester))
