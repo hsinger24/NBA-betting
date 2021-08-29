@@ -18,7 +18,14 @@ def kelly_criterion(row):
         if ml<0:
             b = (100/abs(ml))
         kc = ((p*b) - q) / b
-        return kc/8
+        if (kc > 0.5) & (kc<0.6):
+            return kc/10
+        if (kc > 0.6) & (kc<0.7):
+            return kc/12
+        if kc > 0.7:
+            return kc/15
+        else:
+            return kc/8
 def kelly_criterion_2(row):
     if row['Team2_Prob_Diff']<0:
         return 0
@@ -31,7 +38,14 @@ def kelly_criterion_2(row):
         if ml<0:
             b = (100/abs(ml))
         kc = ((p*b) - q) / b
-        return kc/8
+        if (kc > 0.5) & (kc<0.6):
+            return kc/10
+        if (kc > 0.6) & (kc<0.7):
+            return kc/12
+        if kc > 0.7:
+            return kc/15
+        else:
+            return kc/8
 
 def backtesting(year, starting_capital, ml_param, save_file = True):
     """Backtests our model for a given year
@@ -185,6 +199,7 @@ def backtesting(year, starting_capital, ml_param, save_file = True):
     # Saving file if save_file argument is true
     if save_file:
         test_merged.to_csv('data/test_kc_'+str(year)+'.csv')
+        return test_merged
     else:
         return test_merged
 
