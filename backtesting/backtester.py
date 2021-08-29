@@ -92,17 +92,17 @@ def backtesting(year, starting_capital, ml_param, save_file = True):
     test_merged['Money_Tracker'] = 0
     test_merged['Bet_Won'] = 0
     for index, row in test_merged.iterrows():
-        # Passing over rows where there is no/small perceived advatage
-        if (row.Team1_KC == 0) & (row.Team2_KC == 0):
-            test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
-            continue
-        if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<.01)) | ((row.Team1_Prob_Diff<0.01) & (row.Team2_Prob_Diff<0)):
-            test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
-            continue
-
         payoff1 = 0
         payoff2 = 0
         if index == 0:
+
+             # Passing over rows where there is no/small perceived advatage
+            if (row.Team1_KC == 0) & (row.Team2_KC == 0):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital
+                continue
+            if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<.01)) | ((row.Team1_Prob_Diff<0.01) & (row.Team2_Prob_Diff<0)):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital
+                continue
 
             # Setting bet amount
             if row.Team1_KC>0:
@@ -142,6 +142,14 @@ def backtesting(year, starting_capital, ml_param, save_file = True):
     
         else:
 
+             # Passing over rows where there is no/small perceived advatage
+            if (row.Team1_KC == 0) & (row.Team2_KC == 0):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+                continue
+            if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<.01)) | ((row.Team1_Prob_Diff<0.01) & (row.Team2_Prob_Diff<0)):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+                continue
+            
             # Setting bet amount
             if row.Team1_KC>0:
                 test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
@@ -257,5 +265,5 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-backtester = backtesting(2015, 100000, -1500, save_file=True)
+backtester = backtesting(2014, 100000, -1500, save_file=True)
 print(backtesting_win_pct(backtester))
