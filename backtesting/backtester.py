@@ -257,5 +257,5 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-backtester = backtesting(2018, 100000, -1500, save_file=False)
-print(backtesting_bins(backtester, kc_bins = True))
+backtester = backtesting(2016, 100000, -1500, save_file=True)
+#print(backtesting_bins(backtester, kc_bins = True))
