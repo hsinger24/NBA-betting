@@ -47,7 +47,7 @@ def kelly_criterion_2(row):
         else:
             return kc/8
 
-def backtesting(year, starting_capital, ml_param, kelly, save_file = True):
+def backtesting(year, starting_capital, ml_param, kelly, fixed_capital, save_file = True):
     """Backtests our model for a given year
 
     Args:
@@ -55,6 +55,8 @@ def backtesting(year, starting_capital, ml_param, kelly, save_file = True):
         starting_capital: The amount of capital simulated for the model at the beginning of the year
         ml_param (must be negative): The cutoff point for large favorites not to bet on
         save_file: True if you want to save file to data folder. If false, will return the dataframe
+        kelly: The fraction of a kelly that we will base our bets off
+        fixed_capital: Do we update our capital on a per bet basis?
 
     Returns:
         DataFrame object with all games bet on and keeps track of capital
@@ -192,10 +194,16 @@ def backtesting(year, starting_capital, ml_param, kelly, save_file = True):
                 continue
             
             # Setting bet amount
-            if row.Team1_KC>0:
-                test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
-            if row.Team2_KC>0:
-                test_merged.loc[index, 'Team2_Bet'] = starting_capital*row.Team2_KC
+            if fixed_capital:
+                if row.Team1_KC>0:
+                    test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
+                if row.Team2_KC>0:
+                    test_merged.loc[index, 'Team2_Bet'] = starting_capital*row.Team2_KC
+            else:
+                if row.Team1_KC>0:
+                    test_merged.loc[index, 'Team1_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team1_KC
+                if row.Team2_KC>0:
+                    test_merged.loc[index, 'Team2_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team2_KC
 
             # Setting payoffs
             if test_merged.loc[index, 'Team1_Bet']>0:
@@ -306,5 +314,5 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-backtester = backtesting(2017, 100000, -1500, kelly = 10, save_file=False)
+backtester = backtesting(2015, 100000, -1500, kelly = 10, fixed_capital = False, save_file=False)
 print(backtester.tail())
