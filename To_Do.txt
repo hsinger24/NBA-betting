@@ -1,0 +1,2 @@
+1. Get all backtest data
+2. Create a table of performance as different parameters change
