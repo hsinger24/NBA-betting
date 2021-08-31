@@ -47,7 +47,7 @@ def kelly_criterion_2(row):
         else:
             return kc/8
 
-def backtesting(year, starting_capital, ml_param, save_file = True):
+def backtesting(year, starting_capital, ml_param, kelly, save_file = True):
     """Backtests our model for a given year
 
     Args:
@@ -59,6 +59,47 @@ def backtesting(year, starting_capital, ml_param, save_file = True):
     Returns:
         DataFrame object with all games bet on and keeps track of capital
     """
+    # Creating functions later applied
+    def kelly_criterion(row):
+        if row['Team1_Prob_Diff']<0:
+            return 0
+        else:
+            p = row['Team1_Win_Prob']
+            q = 1-p
+            ml = row['Team1_ML']
+            if ml>=0:
+                b = (ml/100)
+            if ml<0:
+                b = (100/abs(ml))
+            kc = ((p*b) - q) / b
+            if (kc > 0.5) & (kc<0.6):
+                return kc/(kelly+2)
+            if (kc > 0.6) & (kc<0.7):
+                return kc/(kelly+4)
+            if kc > 0.7:
+                return kc/(kelly+7)
+            else:
+                return kc/kelly
+    def kelly_criterion_2(row):
+        if row['Team2_Prob_Diff']<0:
+            return 0
+        else:
+            p = 1 - row['Team1_Win_Prob']
+            q = 1-p
+            ml = row['Team2_ML']
+            if ml>=0:
+                b = (ml/100)
+            if ml<0:
+                b = (100/abs(ml))
+            kc = ((p*b) - q) / b
+            if (kc > 0.5) & (kc<0.6):
+                return kc/(kelly+2)
+            if (kc > 0.6) & (kc<0.7):
+                return kc/(kelly+4)
+            if kc > 0.7:
+                return kc/(kelly+7)
+            else:
+                return kc/kelly
     # Creating necessary columns
     test_merged = pd.read_csv('data/test_merged_' + str(year) + '.csv', index_col = 0)
     test_merged['Team1_ML'] = 0
@@ -265,5 +306,5 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-backtester = backtesting(2014, 100000, -1500, save_file=True)
-print(backtesting_win_pct(backtester))
+backtester = backtesting(2017, 100000, -1500, kelly = 10, save_file=False)
+print(backtester.tail())

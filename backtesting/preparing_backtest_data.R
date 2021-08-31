@@ -20,19 +20,19 @@ data$Team1_is_B2B_First_Opp = factor(as.character(data$Team1_is_B2B_First_Opp), 
 data$Team1_is_B2B_Second_Opp = factor(as.character(data$Team1_is_B2B_Second_Opp), levels = c('0','1'), labels = c('N', 'Y'))
 data$Team1_is_Home_Opp = factor(as.character(data$Team1_is_Home_Opp), levels = c('0','1'), labels = c('N', 'Y'))
 # Getting test data
-train = (Game_ID>21700001 & Game_ID<21800001)
+train = (Game_ID>21400001 & Game_ID<21500001)
 test_data = data[train, ]
-test_data = test_data[160:1214,]
+test_data = test_data[160:1207,]
 test_data[,'Team1_Win_Prob'] = predict(logistic_model, test_data, type = 'raw')
 #test_target = Team1_Won[train]
-#test_target = test_target[160:1214]
+#test_target = test_target[160:1207]
 #predictions = predict(logistic_model, test_data, type = 'raw')
 #predictions = ifelse(predictions>0.5, 1,0)
 #mean(predictions==test_target)
 # Getting odds data
-odds = read.csv('data/odds_2017_test.csv')
+odds = read.csv('data/odds_2014_test.csv')
 odds = subset(odds, select = c(32,5,6,14,26))
 colnames(odds) = c('Game_ID', 'Team1', 'Team2', 'ML1', 'ML2')
 # Merging test_data and odds
 test_merged = merge(test_data, odds, by = 'Game_ID')
-write.csv(test_merged, 'data/test_merged_2017.csv')
+write.csv(test_merged, 'data/test_merged_2014.csv')
