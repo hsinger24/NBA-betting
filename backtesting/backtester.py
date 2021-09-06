@@ -314,5 +314,23 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-backtester = backtesting(2012, 100000, -1500, kelly = 10, fixed_capital = False, save_file=False)
+backtester = backtesting(2017, 100000, -1500, kelly = 15, fixed_capital = False, save_file=False)
 print(backtester.tail())
+
+
+
+# Results by changing parameters
+# returns = pd.DataFrame(columns = ['Year', 'kelly_8', 'kelly_9', 'kelly_10', 'kelly_11', 'kelly_12', 'kelly_13', 'kelly_14', 'kelly_15', 'kelly_16', 'kelly_17', 'kelly_18', 'kelly_19', 'kelly_20'])
+# for year in list(range(2012,2019)):
+#     result = []
+#     for kelly in list(range(8,21)):
+#         backtester = backtesting(year, 100000, -1500, kelly = kelly, fixed_capital = False, save_file=False)
+#         final_capital = backtester.loc[len(backtester)-1, 'Money_Tracker']
+#         returns_value = final_capital/100000
+#         result.append(returns_value)
+#     series = [year] + result
+#     series = pd.Series(series, index = returns.columns)
+#     returns = returns.append(series, ignore_index = True)
+# returns.to_csv('data/changing_kelly_results.csv')
+
+    
