@@ -79,7 +79,7 @@ def backtesting(year, starting_capital, ml_param, kelly, fixed_capital, save_fil
             if (kc > 0.6) & (kc<0.7):
                 return kc/(kelly+4)
             if kc > 0.7:
-                return kc/(kelly+7)
+                return kc/(kelly+6)
             else:
                 return kc/kelly
     def kelly_criterion_2(row):
@@ -99,7 +99,7 @@ def backtesting(year, starting_capital, ml_param, kelly, fixed_capital, save_fil
             if (kc > 0.6) & (kc<0.7):
                 return kc/(kelly+4)
             if kc > 0.7:
-                return kc/(kelly+7)
+                return kc/(kelly+6)
             else:
                 return kc/kelly
     # Creating necessary columns
@@ -314,23 +314,25 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-backtester = backtesting(2017, 100000, -1500, kelly = 15, fixed_capital = False, save_file=False)
-print(backtester.tail())
+# backtester = backtesting(2017, 100000, -1500, kelly = 15, fixed_capital = False, save_file=False)
+# print(backtester.tail())
 
 
 
-# Results by changing parameters
-# returns = pd.DataFrame(columns = ['Year', 'kelly_8', 'kelly_9', 'kelly_10', 'kelly_11', 'kelly_12', 'kelly_13', 'kelly_14', 'kelly_15', 'kelly_16', 'kelly_17', 'kelly_18', 'kelly_19', 'kelly_20'])
-# for year in list(range(2012,2019)):
-#     result = []
-#     for kelly in list(range(8,21)):
-#         backtester = backtesting(year, 100000, -1500, kelly = kelly, fixed_capital = False, save_file=False)
-#         final_capital = backtester.loc[len(backtester)-1, 'Money_Tracker']
-#         returns_value = final_capital/100000
-#         result.append(returns_value)
-#     series = [year] + result
-#     series = pd.Series(series, index = returns.columns)
-#     returns = returns.append(series, ignore_index = True)
-# returns.to_csv('data/changing_kelly_results.csv')
+#Results by changing parameters
+returns = pd.DataFrame(columns = ['Year', 'ml_500', 'ml_750', 'ml_1000', 'ml_1250', 'ml_1500', 'ml_1750', 'ml_2000'])
+for year in list(range(2012,2019)):
+    result = []
+    for ml_param in [-500, -750, -1000, -1250, -1500, -1750, -2000]:
+        backtester = backtesting(year, 100000, ml_param, kelly = 12, fixed_capital = False, save_file=False)
+        final_capital = backtester.loc[len(backtester)-1, 'Money_Tracker']
+        returns_value = final_capital/100000
+        result.append(returns_value)
+    series = [year] + result
+    series = pd.Series(series, index = returns.columns)
+    returns = returns.append(series, ignore_index = True)
+returns.to_csv('data/changing_ml_results.csv')
 
+##### Best kelly = 11 or 12 - Best return is 12.74% (with OG Kelly 2/4/7)
+##### Best ML param = -1750 - Best return is 13.01% (with OG kelly 2/4/7)
     
