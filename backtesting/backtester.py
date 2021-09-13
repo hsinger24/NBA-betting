@@ -47,13 +47,15 @@ def kelly_criterion_2(row):
         else:
             return kc/8
 
-def backtesting(year, starting_capital, ml_param, ml_param_underdog, kelly, fixed_capital, save_file = True):
+def backtesting(year, starting_capital, ml_param, ml_param_underdog, small_advantage, kelly, fixed_capital, save_file = True):
     """Backtests our model for a given year
 
     Args:
         year: The year in which we wish to backtest
         starting_capital: The amount of capital simulated for the model at the beginning of the year
         ml_param (must be negative): The cutoff point for large favorites not to bet on
+        ml_param_underdog: The cutoff point for large underdogs not to bet on
+        small_advantage: The cutoff point for small differences in probabilities
         save_file: True if you want to save file to data folder. If false, will return the dataframe
         kelly: The fraction of a kelly that we will base our bets off
         fixed_capital: Do we update our capital on a per bet basis?
@@ -143,7 +145,7 @@ def backtesting(year, starting_capital, ml_param, ml_param_underdog, kelly, fixe
             if (row.Team1_KC == 0) & (row.Team2_KC == 0):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital
                 continue
-            if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<.01)) | ((row.Team1_Prob_Diff<0.01) & (row.Team2_Prob_Diff<0)):
+            if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<small_advantage)) | ((row.Team1_Prob_Diff<small_advantage) & (row.Team2_Prob_Diff<0)):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital
                 continue
 
@@ -195,7 +197,7 @@ def backtesting(year, starting_capital, ml_param, ml_param_underdog, kelly, fixe
             if (row.Team1_KC == 0) & (row.Team2_KC == 0):
                 test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
                 continue
-            if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<.01)) | ((row.Team1_Prob_Diff<0.01) & (row.Team2_Prob_Diff<0)):
+            if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<small_advantage)) | ((row.Team1_Prob_Diff<small_advantage) & (row.Team2_Prob_Diff<0)):
                 test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
                 continue
             
@@ -326,26 +328,26 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-# backtester = backtesting(2018, 100000, -1750, 1000, kelly = 12, fixed_capital = False, save_file=False)
+# backtester = backtesting(2018, 100000, -1750, 1000, .01, kelly = 12, fixed_capital = False, save_file=False)
 # print(backtester.tail())
 
 
 
 #Results by changing parameters
-returns = pd.DataFrame(columns = ['Year', 'ml_500', 'ml_750', 'ml_1000', 'ml_1250', 'ml_1500', 'ml_1750', 'ml_2000'])
+returns = pd.DataFrame(columns = ['Year', '.00001', '.005', '.01', '.015', '.02', '.025', '.03'])
 for year in list(range(2012,2019)):
     result = []
-    for ml_param in [500, 750, 1000, 1250, 1500, 1750, 2000]:
-        backtester = backtesting(year, 100000, -1750, ml_param, kelly = 12, fixed_capital = False, save_file=False)
+    for small_advantage in [.00001, .005, .01, .015, .02, .025, .03]:
+        backtester = backtesting(year, 100000, -1750, 1000, small_advantage, kelly = 12, fixed_capital = False, save_file=False)
         final_capital = backtester.loc[len(backtester)-1, 'Money_Tracker']
         returns_value = final_capital/100000
         result.append(returns_value)
     series = [year] + result
     series = pd.Series(series, index = returns.columns)
     returns = returns.append(series, ignore_index = True)
-returns.to_csv('data/changing_ml_underdog_results.csv')
+returns.to_csv('data/changing_small_advantage.csv')
 
 ##### Best kelly = 11 or 12 - Best return is 12.74% (with OG Kelly 2/4/7)
 ##### Best ML param for favorites = -1750 - Best return is 13.01% (with OG kelly 2/4/7)
-##### Bes return for ML underdog param is 1000. Ups return w/ above parameters to 17%
-    
+##### Best return for ML underdog param is 1000. Ups return w/ above parameters to 17%
+##### Best return for small advantage is .025 with about 20%  
