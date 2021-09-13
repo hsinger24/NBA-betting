@@ -47,7 +47,7 @@ def kelly_criterion_2(row):
         else:
             return kc/8
 
-def backtesting(year, starting_capital, ml_param, kelly, fixed_capital, save_file = True):
+def backtesting(year, starting_capital, ml_param, ml_param_underdog, kelly, fixed_capital, save_file = True):
     """Backtests our model for a given year
 
     Args:
@@ -79,7 +79,7 @@ def backtesting(year, starting_capital, ml_param, kelly, fixed_capital, save_fil
             if (kc > 0.6) & (kc<0.7):
                 return kc/(kelly+4)
             if kc > 0.7:
-                return kc/(kelly+6)
+                return kc/(kelly+7)
             else:
                 return kc/kelly
     def kelly_criterion_2(row):
@@ -99,7 +99,7 @@ def backtesting(year, starting_capital, ml_param, kelly, fixed_capital, save_fil
             if (kc > 0.6) & (kc<0.7):
                 return kc/(kelly+4)
             if kc > 0.7:
-                return kc/(kelly+6)
+                return kc/(kelly+7)
             else:
                 return kc/kelly
     # Creating necessary columns
@@ -165,11 +165,17 @@ def backtesting(year, starting_capital, ml_param, kelly, fixed_capital, save_fil
                 if row.Team2_ML>0:
                     payoff2 = test_merged.loc[index, 'Team2_Bet'] *(row.Team2_ML/100)
 
-            # Passing over huge favorites
+            # Passing over huge favorites/underdogs
             if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<ml_param):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital
                 continue
             if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<ml_param):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital
+                continue
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML>ml_param_underdog):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital
+                continue
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML>ml_param_underdog):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital
                 continue
         
@@ -217,11 +223,17 @@ def backtesting(year, starting_capital, ml_param, kelly, fixed_capital, save_fil
                 if row.Team2_ML>0:
                     payoff2 = test_merged.loc[index, 'Team2_Bet'] *(row.Team2_ML/100)
             
-            # Passing over huge favorites
+            # Passing over huge favorites/underdogs
             if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<ml_param):
                 test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
                 continue
             if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<ml_param):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+                continue
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML>ml_param_underdog):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+                continue
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML>ml_param_underdog):
                 test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
                 continue
             
@@ -314,7 +326,7 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-# backtester = backtesting(2017, 100000, -1500, kelly = 15, fixed_capital = False, save_file=False)
+# backtester = backtesting(2018, 100000, -1750, 1000, kelly = 12, fixed_capital = False, save_file=False)
 # print(backtester.tail())
 
 
@@ -323,16 +335,17 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
 returns = pd.DataFrame(columns = ['Year', 'ml_500', 'ml_750', 'ml_1000', 'ml_1250', 'ml_1500', 'ml_1750', 'ml_2000'])
 for year in list(range(2012,2019)):
     result = []
-    for ml_param in [-500, -750, -1000, -1250, -1500, -1750, -2000]:
-        backtester = backtesting(year, 100000, ml_param, kelly = 12, fixed_capital = False, save_file=False)
+    for ml_param in [500, 750, 1000, 1250, 1500, 1750, 2000]:
+        backtester = backtesting(year, 100000, -1750, ml_param, kelly = 12, fixed_capital = False, save_file=False)
         final_capital = backtester.loc[len(backtester)-1, 'Money_Tracker']
         returns_value = final_capital/100000
         result.append(returns_value)
     series = [year] + result
     series = pd.Series(series, index = returns.columns)
     returns = returns.append(series, ignore_index = True)
-returns.to_csv('data/changing_ml_results.csv')
+returns.to_csv('data/changing_ml_underdog_results.csv')
 
 ##### Best kelly = 11 or 12 - Best return is 12.74% (with OG Kelly 2/4/7)
-##### Best ML param = -1750 - Best return is 13.01% (with OG kelly 2/4/7)
+##### Best ML param for favorites = -1750 - Best return is 13.01% (with OG kelly 2/4/7)
+##### Bes return for ML underdog param is 1000. Ups return w/ above parameters to 17%
     
