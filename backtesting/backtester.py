@@ -1,6 +1,6 @@
 import pandas as pd
 
-# Creating functions to later apply
+##########BACKTESTING FUNCTIONS##########
 def convert_odds(x):
     if x<0:
         return (abs(x)/(abs(x)+100))
@@ -328,26 +328,27 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-# backtester = backtesting(2018, 100000, -1750, 1000, .01, kelly = 12, fixed_capital = False, save_file=False)
-# print(backtester.tail())
+backtester = backtesting(year = 2018, starting_capital = 100000, ml_param = -1750, ml_param_underdog = 1000,
+ small_advantage =  .025, kelly = 12, fixed_capital = False, save_file=False)
+print(backtester.tail())
 
-
-
-#Results by changing parameters
-returns = pd.DataFrame(columns = ['Year', '.00001', '.005', '.01', '.015', '.02', '.025', '.03'])
-for year in list(range(2012,2019)):
-    result = []
-    for small_advantage in [.00001, .005, .01, .015, .02, .025, .03]:
-        backtester = backtesting(year, 100000, -1750, 1000, small_advantage, kelly = 12, fixed_capital = False, save_file=False)
-        final_capital = backtester.loc[len(backtester)-1, 'Money_Tracker']
-        returns_value = final_capital/100000
-        result.append(returns_value)
-    series = [year] + result
-    series = pd.Series(series, index = returns.columns)
-    returns = returns.append(series, ignore_index = True)
-returns.to_csv('data/changing_small_advantage.csv')
+##########OPTIMIZING PARAMETERS##########
+# returns = pd.DataFrame(columns = ['Year', '.00001', '.005', '.01', '.015', '.02', '.025', '.03'])
+# for year in list(range(2012,2019)):
+#     result = []
+#     for small_advantage in [.00001, .005, .01, .015, .02, .025, .03]:
+#         backtester = backtesting(year = year, starting_capital = 100000, ml_param = -1750,
+#            ml_param_underdog = 1000, small_advantage = small_advantage, kelly = 12, fixed_capital = False,
+#            save_file=False)
+#         final_capital = backtester.loc[len(backtester)-1, 'Money_Tracker']
+#         returns_value = final_capital/100000
+#         result.append(returns_value)
+#     series = [year] + result
+#     series = pd.Series(series, index = returns.columns)
+#     returns = returns.append(series, ignore_index = True)
+# returns.to_csv('data/changing_small_advantage.csv')
 
 ##### Best kelly = 11 or 12 - Best return is 12.74% (with OG Kelly 2/4/7)
 ##### Best ML param for favorites = -1750 - Best return is 13.01% (with OG kelly 2/4/7)
-##### Best return for ML underdog param is 1000. Ups return w/ above parameters to 17%
-##### Best return for small advantage is .025 with about 20%  
+##### Best return for ML underdog param is 1000. Ups return w/ above parameters to 17% (with OG Kelly 2/4/7)
+##### Best return for small advantage is .025 with about 20% (with OG Kelly 2/4/7)
