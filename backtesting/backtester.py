@@ -1,4 +1,5 @@
 import pandas as pd
+import datetime as dt
 
 ##########BACKTESTING FUNCTIONS##########
 def convert_odds(x):
@@ -202,6 +203,7 @@ def backtesting(year, starting_capital, ml_param, ml_param_underdog, small_advan
                 continue
             
             # Setting bet amount
+            dates = list(test_merged.Date.unique())
             if fixed_capital:
                 if row.Team1_KC>0:
                     test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
@@ -209,9 +211,30 @@ def backtesting(year, starting_capital, ml_param, ml_param_underdog, small_advan
                     test_merged.loc[index, 'Team2_Bet'] = starting_capital*row.Team2_KC
             else:
                 if row.Team1_KC>0:
-                    test_merged.loc[index, 'Team1_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team1_KC
+                    if row.Date == dates[0]:
+                        test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
+                    else:
+                        yesterday_index = dates.index(row.Date)-1
+                        yesterday = dates[yesterday_index]
+                        yesterday_df = test_merged.loc[test_merged.Date==yesterday, :]
+                        yesterday_df.reset_index(drop = True, inplace = True)
+                        bet_capital = yesterday_df.loc[len(yesterday_df)-1, 'Money_Tracker']
+                        test_merged.loc[index, 'Team1_Bet'] = bet_capital*row.Team1_KC
                 if row.Team2_KC>0:
-                    test_merged.loc[index, 'Team2_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team2_KC
+                    if row.Date == dates[0]:
+                        test_merged.loc[index, 'Team2_Bet'] = starting_capital*row.Team2_KC
+                    else:
+                        yesterday_index = dates.index(row.Date)-1
+                        yesterday = dates[yesterday_index]
+                        yesterday_df = test_merged.loc[test_merged.Date==yesterday, :]
+                        yesterday_df.reset_index(drop = True, inplace = True)
+                        bet_capital = yesterday_df.loc[len(yesterday_df)-1, 'Money_Tracker']
+                        test_merged.loc[index, 'Team2_Bet'] = bet_capital*row.Team2_KC
+            # else:
+            #     if row.Team1_KC>0:
+            #         test_merged.loc[index, 'Team1_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team1_KC
+            #     if row.Team2_KC>0:
+            #         test_merged.loc[index, 'Team2_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team2_KC
 
             # Setting payoffs
             if test_merged.loc[index, 'Team1_Bet']>0:
@@ -331,6 +354,7 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
 backtester = backtesting(year = 2018, starting_capital = 100000, ml_param = -1750, ml_param_underdog = 1000,
  small_advantage =  .025, kelly = 12, fixed_capital = False, save_file=False)
 print(backtester.tail())
+
 
 ##########OPTIMIZING PARAMETERS##########
 # returns = pd.DataFrame(columns = ['Year', '.00001', '.005', '.01', '.015', '.02', '.025', '.03'])
