@@ -351,9 +351,9 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-backtester = backtesting(year = 2018, starting_capital = 100000, ml_param = -1750, ml_param_underdog = 1000,
- small_advantage =  .025, kelly = 12, fixed_capital = False, save_file=False)
-print(backtester.tail())
+backtester = backtesting(year = 2013, starting_capital = 100000, ml_param = -1750, ml_param_underdog = 1000,
+ small_advantage =  .025, kelly = 12, fixed_capital = False, save_file=True)
+#print(backtester.tail(200))
 
 
 ##########OPTIMIZING PARAMETERS##########
