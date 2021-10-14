@@ -57,5 +57,3 @@ def retrieve_odds():
     odds_df['Home_Prob'] = odds_df.Home_Odds.apply(calculate_odds)
     odds_df['Away_Prob'] = odds_df.Away_Odds.apply(calculate_odds)
     return odds_df
-
-print(retrieve_odds())
