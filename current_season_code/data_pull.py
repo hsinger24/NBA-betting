@@ -39,7 +39,7 @@ def retrieve_advanced_stats(year, continue_value = None):
             print(game, 'advanced')
             break
     games_df_2021.reset_index(drop = True, inplace = True)
-    games_df_2021.to_csv('data/api_data_' + str(year) + '_advanced.csv')
+    games_df_2021.to_csv('current_season_data/api_data_' + str(year) + '_advanced.csv')
     return
 
 def retrieve_traditional_stats(year, continue_value = None):
@@ -76,7 +76,5 @@ def retrieve_traditional_stats(year, continue_value = None):
             print(game, 'traditional')
             break
     games_df_2021.reset_index(drop = True, inplace = True)
-    games_df_2021.to_csv('data/api_data_' + str(year) + '_traditional.csv')
+    games_df_2021.to_csv('current_season_data/api_data_' + str(year) + '_traditional.csv')
     return
-
-retrieve_traditional_stats(2021)

@@ -12,8 +12,8 @@ def format_api_data(year):
         DataFrame with formatted API data
     """
     # Reading in data
-    advanced = pd.read_csv('data/api_data_' + str(year) + '_advanced.csv', index_col = 0)
-    traditional = pd.read_csv('data/api_data_' + str(year) + '_traditional.csv', index_col = 0)
+    advanced = pd.read_csv('current_season_data/api_data_' + str(year) + '_advanced.csv', index_col = 0)
+    traditional = pd.read_csv('current_season_data/api_data_' + str(year) + '_traditional.csv', index_col = 0)
 
     #Merging data, dropping unnecessary columns, renaming columns
 
@@ -236,10 +236,10 @@ def format_merged(year, formatted_odds, formatted_api_data):
         'Atlanta' : 'Hawks',
         'Cleveland' : 'Cavaliers',
         'Toronto' : 'Raptors',
-    #     'NewOrleans' : 'Pelicans',
-    #     'New Orleans' : 'Pelicans',
-        'New Orleans' : 'Hornets',
-        'NewOrleans' : 'Hornets',
+        'NewOrleans' : 'Pelicans',
+        'New Orleans' : 'Pelicans',
+        # 'New Orleans' : 'Hornets',
+        # 'NewOrleans' : 'Hornets',
         'Houston' : 'Rockets',
         'Minnesota' : 'Timberwolves',
         'SanAntonio' : 'Spurs',
@@ -615,3 +615,4 @@ def format_final_stats(year, formatted_merged, formatted_odds):
     attempt.to_csv('data/final_stats_' + str(year) + '.csv')
     return
 
+print(format_api_data(2021))

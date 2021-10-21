@@ -14,6 +14,14 @@ import re
 import json
 import unidecode
 import re
+import datetime as dt
+from current_season_code.data_pull import *
+
+##########NECESSARY VARIABLES##########
+
+year = 2021
+continue_value_advanced = 14
+continue_value_traditional = 14
 
 ##########FUNCTIONS##########
 
@@ -57,3 +65,10 @@ def retrieve_odds():
     odds_df['Home_Prob'] = odds_df.Home_Odds.apply(calculate_odds)
     odds_df['Away_Prob'] = odds_df.Away_Odds.apply(calculate_odds)
     return odds_df
+
+##########RUN##########
+
+odds = retrieve_odds()
+retrieve_advanced_stats(year = year)
+retrieve_traditional_stats(year = year)
+formatted_api_data = format_api_data(year = year)
