@@ -12,8 +12,8 @@ def format_api_data(year):
         DataFrame with formatted API data
     """
     # Reading in data
-    advanced = pd.read_csv('current_season_data/api_data_' + str(year) + '_advanced.csv', index_col = 0)
-    traditional = pd.read_csv('current_season_data/api_data_' + str(year) + '_traditional.csv', index_col = 0)
+    advanced = pd.read_csv('data/api_data_' + str(year) + '_advanced.csv', index_col = 0)
+    traditional = pd.read_csv('data/api_data_' + str(year) + '_traditional.csv', index_col = 0)
 
     #Merging data, dropping unnecessary columns, renaming columns
 
