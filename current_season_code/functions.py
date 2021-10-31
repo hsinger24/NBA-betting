@@ -180,7 +180,39 @@ def calculate_odds(odds):
     if odds>0:
         return (100/(odds+100))*100
 
-def retrieve_odds():
+def retrieve_odds(save):
+    team_map = {
+        'WAS' : 'Wizards',
+        'BOS' : 'Celtics',
+        'NOP' : 'Pelicans',
+        'NYK' : 'Knicks',
+        'DET' : 'Pistons',
+        'ORL' : 'Magic',
+        'PHI' : '76ers',
+        'ATL' : 'Hawks',
+        'IND' : 'Pacers',
+        'TOR' : 'Raptors',
+        'MEM' : 'Grizzlies',
+        'MIA' : 'Heat',
+        'CHI' : 'Bulls',
+        'UTA' : 'Jazz',
+        'MIL' : 'Bucks',
+        'SAS' : 'Spurs',
+        'GSW' : 'Warriors',
+        'OKC' : 'Thunder',
+        'MIN' : 'Timberwolves',
+        'DEN' : 'Nuggets',
+        'PHX' : 'Suns',
+        'CLE' : 'Cavaliers',
+        'DAL' : 'Mavericks',
+        'SAC' : 'Kings',
+        'CHA' : 'Hornets',
+        'POR' : 'Trail Blazers',
+        'BKN' : 'Nets',
+        'LAL' : 'Lakers',
+        'LAC' : 'Clippers',
+        'HOU' : 'Rockets'
+    }
     driver = webdriver.Chrome(ChromeDriverManager().install())
     driver.get('https://www.actionnetwork.com/nba/odds')
     ml_button = driver.find_element_by_xpath("//*[@id='__next']/div/main/div/div[3]/div[2]/div[1]/label[3]")
@@ -214,5 +246,8 @@ def retrieve_odds():
         odds_df = odds_df.append(append, ignore_index = True)
     odds_df['Home_Prob'] = odds_df.Home_Odds.apply(calculate_odds)
     odds_df['Away_Prob'] = odds_df.Away_Odds.apply(calculate_odds)
-    odds_df.to_csv('current_season_data/yesterday_odds.csv')
+    odds_df['Home_Team'] = odds_df.Home_Team.apply(lambda x: team_map[x])
+    odds_df['Away_Team'] = odds_df.Away_Team.apply(lambda x: team_map[x])
+    if save:
+        odds_df.to_csv('current_season_data/yesterday_odds.csv')
     return odds_df
