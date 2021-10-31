@@ -4,6 +4,19 @@ import numpy as np
 from nba_api.stats.endpoints import boxscoreadvancedv2
 from nba_api.stats.endpoints import boxscoretraditionalv2
 from nba_api.stats.endpoints import cumestatsteam
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+import re
+import json
+import unidecode
+import re
 
 def retrieve_advanced_stats(year, continue_value = None):
     """Retrieves advanced stats from NBA api for given year. NEED TO ADJUST GAME ID MANUALLY
@@ -34,6 +47,7 @@ def retrieve_advanced_stats(year, continue_value = None):
                 game_id = '00221' + '0' + game
             box_score = boxscoreadvancedv2.BoxScoreAdvancedV2(game_id = game_id)
             box_df = box_score.get_data_frames()[1]
+            box_df['Date'] = dt.date.today() - dt.timedelta(days = 1)
             games_df_2021 = games_df_2021.append(box_df)
         except:
             print(game, 'advanced')
@@ -103,7 +117,7 @@ def format_api_data(year):
         'OFF_RATING', 'E_DEF_RATING', 'DEF_RATING', 'E_NET_RATING',
         'NET_RATING', 'AST_PCT', 'AST_TOV', 'AST_RATIO', 'OREB_PCT', 'DREB_PCT',
         'REB_PCT', 'E_TM_TOV_PCT', 'TM_TOV_PCT', 'EFG_PCT', 'TS_PCT', 'USG_PCT',
-        'E_USG_PCT', 'E_PACE', 'PACE', 'PACE_PER40', 'POSS', 'PIE']
+        'E_USG_PCT', 'E_PACE', 'PACE', 'PACE_PER40', 'POSS', 'PIE', 'Date']
     # Joining data to itself to have one row per game
     evens = merged.iloc[::2]
     evens.reset_index(drop = True, inplace = True)
@@ -145,7 +159,7 @@ def format_api_data(year):
         'DEF_RATING_x', 'E_NET_RATING_x', 'NET_RATING_x', 'AST_PCT_x',
         'AST_TOV_x', 'AST_RATIO_x', 'OREB_PCT_x', 'DREB_PCT_x', 'REB_PCT_x',
         'E_TM_TOV_PCT_x', 'TM_TOV_PCT_x', 'EFG_PCT_x', 'TS_PCT_x', 'USG_PCT_x',
-        'E_USG_PCT_x', 'E_PACE_x', 'PACE_x', 'PACE_PER40_x', 'POSS_x', 'PIE_x',
+        'E_USG_PCT_x', 'E_PACE_x', 'PACE_x', 'PACE_PER40_x', 'POSS_x', 'PIE_x', 'Date_x',
         'GAME_ID_y', 'TEAM_ID_y', 'FGM_y', 'FGA_y', 'FG_PCT_y',
         'FG3M_y', 'FG3A_y', 'FG3_PCT_y', 'FTM_y', 'FTA_y', 'FT_PCT_y', 'OREB_y',
         'DREB_y', 'REB_y', 'AST_y', 'STL_y', 'BLK_y', 'TO_y', 'PF_y', 'PTS_y',
@@ -153,9 +167,52 @@ def format_api_data(year):
         'DEF_RATING_y', 'E_NET_RATING_y', 'NET_RATING_y', 'AST_PCT_y',
         'AST_TOV_y', 'AST_RATIO_y', 'OREB_PCT_y', 'DREB_PCT_y', 'REB_PCT_y',
         'E_TM_TOV_PCT_y', 'TM_TOV_PCT_y', 'EFG_PCT_y', 'TS_PCT_y', 'USG_PCT_y',
-        'E_USG_PCT_y', 'E_PACE_y', 'PACE_y', 'PACE_PER40_y', 'POSS_y', 'PIE_y',
+        'E_USG_PCT_y', 'E_PACE_y', 'PACE_y', 'PACE_PER40_y', 'POSS_y', 'PIE_y', 'Date_y',
         'Team_1_wins', 'Team_1_losses', 'Team_2_wins', 'Team_2_losses',
         'Team_1_win_pct', 'Team_2_win_pct']]
 
     print(final.shape)
     return final
+
+def calculate_odds(odds):
+    if odds<0:
+        return (abs(odds)/(abs(odds)+100))*100
+    if odds>0:
+        return (100/(odds+100))*100
+
+def retrieve_odds():
+    driver = webdriver.Chrome(ChromeDriverManager().install())
+    driver.get('https://www.actionnetwork.com/nba/odds')
+    ml_button = driver.find_element_by_xpath("//*[@id='__next']/div/main/div/div[3]/div[2]/div[1]/label[3]")
+    ml_button.click()
+    spread_button = driver.find_element_by_xpath("//*[@id='__next']/div/main/div/div[3]/div[2]/div[1]/label[1]")
+    spread_button.click()
+    html = driver.page_source
+    tables = pd.read_html(html)
+    odds = tables[0]
+    team_regex = r'[A-Z]{2,3}'
+    odds_df = pd.DataFrame(columns = ['Home_Team', 'Away_Team', 'Home_Odds', 'Away_Odds', 'Date'])
+    for index, row in odds.iterrows():
+        teams = re.findall(team_regex, row.Scheduled)
+        teams = teams[1:]
+        away_team = teams[0]
+        home_team = teams[1]
+        ml_string = row['Unnamed: 4']
+        ml_away = ml_string[11:15]
+        ml_home = ml_string[-6:-2]
+        try:
+            ml_away = float(ml_away)
+        except:
+            continue
+        try:
+            ml_home = float(ml_home)
+        except:
+            continue
+        date = dt.date.today()
+        to_append = [home_team, away_team, ml_home, ml_away, date]
+        append = pd.Series(to_append, index = odds_df.columns)
+        odds_df = odds_df.append(append, ignore_index = True)
+    odds_df['Home_Prob'] = odds_df.Home_Odds.apply(calculate_odds)
+    odds_df['Away_Prob'] = odds_df.Away_Odds.apply(calculate_odds)
+    odds_df.to_csv('current_season_data/yesterday_odds.csv')
+    return odds_df
