@@ -1,6 +1,11 @@
 import pandas as pd
 import datetime as dt
 import numpy as np
+import time
+import re
+import json
+import unidecode
+import re
 from nba_api.stats.endpoints import boxscoreadvancedv2
 from nba_api.stats.endpoints import boxscoretraditionalv2
 from nba_api.stats.endpoints import cumestatsteam
@@ -12,11 +17,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from webdriver_manager.chrome import ChromeDriverManager
-import time
-import re
-import json
-import unidecode
-import re
 
 def retrieve_advanced_stats(year, continue_value = None):
     """Retrieves advanced stats from NBA api for given year. NEED TO ADJUST GAME ID MANUALLY
