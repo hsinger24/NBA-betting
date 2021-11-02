@@ -174,6 +174,71 @@ def format_api_data(year):
     print(final.shape)
     return final
 
+def formatted_data_1(formatted_api_data):
+    existing_data = pd.read_csv('current_season_data/formatted_data_1.csv')
+    formatted_api_data.drop_duplicates(subset = ['GAME_ID_x'], inplace = True)
+    formatted_api_data.reset_index(drop = True, inplace = True)
+    columns = list(formatted_api_data.columns)
+    data = formatted_api_data[['Date_y']+columns[:-7]+columns[-6:]]
+    columns = ['Date', 'GAME_ID', 'TEAM_NAME', 'TEAM_NAME_Opp', 'FGM', 'FGA',
+        'FG_PCT', 'FG3M', 'FG3A', 'FG3_PCT', 'FTM', 'FTA',
+        'FT_PCT', 'OREB', 'DREB', 'REB', 'AST', 'STL', 'BLK',
+        'TO', 'PF', 'PTS', 'PLUS_MINUS', 'E_OFF_RATING',
+        'OFF_RATING', 'E_DEF_RATING', 'DEF_RATING', 'E_NET_RATING',
+        'NET_RATING', 'AST_PCT', 'AST_TOV', 'AST_RATIO', 'OREB_PCT',
+        'DREB_PCT', 'REB_PCT', 'E_TM_TOV_PCT', 'TM_TOV_PCT',
+        'EFG_PCT', 'TS_PCT', 'USG_PCT', 'E_USG_PCT', 'E_PACE',
+        'PACE', 'PACE_PER40', 'POSS', 'PIE', 'drop_1', 'drop_2',
+        'drop_3', 'FGM_Opp', 'FGA_Opp', 'FG_PCT_Opp', 'FG3M_Opp', 'FG3A_Opp',
+        'FG3_PCT_Opp', 'FTM_Opp', 'FTA_Opp', 'FT_PCT_Opp', 'OREB_Opp', 'DREB_Opp', 'REB_Opp',
+        'AST_Opp', 'STL_Opp', 'BLK_Opp', 'TO_Opp', 'PF_Opp', 'PTS_Opp', 'PLUS_MINUS_Opp',
+        'E_OFF_RATING_Opp', 'OFF_RATING_Opp', 'E_DEF_RATING_Opp', 'DEF_RATING_Opp',
+        'E_NET_RATING_Opp', 'NET_RATING_Opp', 'AST_PCT_Opp', 'AST_TOV_Opp',
+        'AST_RATIO_Opp', 'OREB_PCT_Opp', 'DREB_PCT_Opp', 'REB_PCT_Opp',
+        'E_TM_TOV_PCT_Opp', 'TM_TOV_PCT_Opp', 'EFG_PCT_Opp', 'TS_PCT_Opp', 'USG_PCT_Opp',
+        'E_USG_PCT_Opp', 'E_PACE_Opp', 'PACE_Opp', 'PACE_PER40_Opp', 'POSS_Opp', 'PIE_Opp',
+        'Wins', 'Losses', 'Wins_Opp', 'Losses_Opp',
+        'Win_Pct', 'Win_Pct_Opp']
+    data.columns = columns
+    odds_yesterday = pd.read_csv('current_season_data/yesterday_odds.csv', index_col = 0)
+    odds_yesterday['GAME_ID'] = 0
+    odds_yesterday
+    yesterday = dt.date.today() - dt.timedelta(days = 1)
+    yesterday = str(yesterday)
+    yesterday_formatted = data[data.Date==yesterday]
+    teams = list(yesterday_formatted['TEAM_NAME'])
+    teams_opp = list(yesterday_formatted['TEAM_NAME_Opp'])
+    for index, row in odds_yesterday.iterrows():
+        if row.Home_Team in teams:
+            location = teams.index(row.Home_Team)
+            team = teams[location]
+            game_id = yesterday_formatted[yesterday_formatted.TEAM_NAME==team]['GAME_ID'].values[0]
+            odds_yesterday.loc[index, 'GAME_ID'] = game_id
+        else:
+            location = teams_opp.index(row.Home_Team)
+            team = teams[location]
+            game_id = yesterday_formatted[yesterday_formatted.TEAM_NAME==team]['GAME_ID'].values[0]
+            odds_yesterday.loc[index, 'GAME_ID'] = game_id
+    merged = pd.merge(yesterday_formatted, odds_yesterday, on = 'GAME_ID')
+    columns = list(merged.columns)
+    merged = merged[['GAME_ID', 'Date_x', 'Away_Team', 'Home_Odds', 'Home_Team', 'Away_Odds']+columns[1:-7]]
+    merged = merged.loc[:,~merged.columns.duplicated()]
+    merged.columns = ['Game_ID', 'Date', 'Away_Team', 'ML_Home', 'Home_Team', 'ML_Away', 'Team', 'Team_Opp',
+        'FGM', 'FGA', 'FG_PCT', 'FG3M', 'FG3A', 'FG3_PCT', 'FTM', 'FTA', 'FT_PCT', 'OREB', 'DREB','REB', 'AST',
+        'STL', 'BLK', 'TO', 'PF', 'PTS', 'PLUS_MINUS', 'E_OFF_RATING', 'OFF_RATING', 'E_DEF_RATING', 'DEF_RATING',
+        'E_NET_RATING', 'NET_RATING', 'AST_PCT', 'AST_TOV', 'AST_RATIO', 'OREB_PCT', 'DREB_PCT', 'REB_PCT', 'E_TM_TOV_PCT',
+        'TM_TOV_PCT', 'EFG_PCT', 'TS_PCT', 'USG_PCT', 'E_USG_PCT', 'E_PACE', 'PACE', 'PACE_PER40', 'POSS', 'PIE',
+        'drop_1', 'drop_2', 'drop_3','FGM_Opp', 'FGA_Opp', 'FG_PCT_Opp', 'FG3M_Opp','FG3A_Opp', 'FG3_PCT_Opp',
+        'FTM_Opp','FTA_Opp', 'FT_PCT_Opp', 'OREB_Opp', 'DREB_Opp', 'REB_Opp', 'AST_Opp','STL_Opp', 'BLK_Opp', 'TO_Opp',
+        'PF_Opp', 'PTS_Opp', 'PLUS_MINUS_Opp', 'E_OFF_RATING_Opp', 'OFF_RATING_Opp', 'E_DEF_RATING_Opp', 'DEF_RATING_Opp',
+        'E_NET_RATING_Opp', 'NET_RATING_Opp', 'AST_PCT_Opp', 'AST_TOV_Opp', 'AST_RATIO_Opp', 'OREB_PCT_Opp', 'DREB_PCT_Opp',
+        'REB_PCT_Opp', 'E_TM_TOV_PCT_Opp', 'TM_TOV_PCT_Opp', 'EFG_PCT_Opp', 'TS_PCT_Opp', 'USG_PCT_Opp', 'E_USG_PCT_Opp',
+        'E_PACE_Opp', 'PACE_Opp', 'PACE_PER40_Opp', 'POSS_Opp', 'PIE_Opp', 'Wins', 'Losses', 'Wins_Opp', 'Losses_Opp',
+        'Win_Pct', 'Win_Pct_Opp']
+    final = existing_data.append(merged)
+    final.to_csv('current_season_data/formatted_data_1.csv')
+    return final
+
 def calculate_odds(odds):
     if odds<0:
         return (abs(odds)/(abs(odds)+100))*100

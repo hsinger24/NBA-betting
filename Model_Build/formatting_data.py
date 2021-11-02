@@ -615,4 +615,3 @@ def format_final_stats(year, formatted_merged, formatted_odds):
     attempt.to_csv('data/final_stats_' + str(year) + '.csv')
     return
 
-print(format_api_data(2021))
