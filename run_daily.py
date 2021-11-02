@@ -20,8 +20,8 @@ from current_season_code.functions import *
 ##########NECESSARY VARIABLES##########
 
 year = 2021
-continue_value_advanced = 94
-continue_value_traditional = 94
+continue_value_advanced = 103
+continue_value_traditional = 103
 
 ##########RUN##########
 
@@ -29,5 +29,6 @@ continue_value_traditional = 94
 #retrieve_advanced_stats(year = year, continue_value=continue_value_advanced)
 #retrieve_traditional_stats(year = year, continue_value=continue_value_traditional)
 #formatted_api_data = format_api_data(year = year)
+#format_1 = formatted_data_1(formatted_api_data)
 
-odds = retrieve_odds(save = True)
+#odds = retrieve_odds(save = True)
