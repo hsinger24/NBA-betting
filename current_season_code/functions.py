@@ -175,7 +175,7 @@ def format_api_data(year):
     return final
 
 def formatted_data_1(formatted_api_data):
-    existing_data = pd.read_csv('current_season_data/formatted_data_1.csv')
+    existing_data = pd.read_csv('current_season_data/formatted_data_1.csv', index_col = 0)
     formatted_api_data.drop_duplicates(subset = ['GAME_ID_x'], inplace = True)
     formatted_api_data.reset_index(drop = True, inplace = True)
     columns = list(formatted_api_data.columns)
@@ -235,7 +235,9 @@ def formatted_data_1(formatted_api_data):
         'REB_PCT_Opp', 'E_TM_TOV_PCT_Opp', 'TM_TOV_PCT_Opp', 'EFG_PCT_Opp', 'TS_PCT_Opp', 'USG_PCT_Opp', 'E_USG_PCT_Opp',
         'E_PACE_Opp', 'PACE_Opp', 'PACE_PER40_Opp', 'POSS_Opp', 'PIE_Opp', 'Wins', 'Losses', 'Wins_Opp', 'Losses_Opp',
         'Win_Pct', 'Win_Pct_Opp']
+    merged.drop(['drop_1', 'drop_2', 'drop_3'], axis = 1, inplace = True)
     final = existing_data.append(merged)
+    final.reset_index(drop = True, inplace = True)
     final.to_csv('current_season_data/formatted_data_1.csv')
     return final
 
