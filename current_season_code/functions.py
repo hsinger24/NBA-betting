@@ -171,7 +171,6 @@ def format_api_data(year):
         'Team_1_wins', 'Team_1_losses', 'Team_2_wins', 'Team_2_losses',
         'Team_1_win_pct', 'Team_2_win_pct']]
 
-    print(final.shape)
     return final
 
 def formatted_data_1(formatted_api_data):
@@ -274,7 +273,7 @@ def formatted_data_2():
     'LAC' : 'Clippers',
     'HOU' : 'Rockets'
     }
-    test = pd.read_csv('current_season_data/formatted_data_1.csv')
+    test = pd.read_csv('current_season_data/formatted_data_1.csv', index_col = 0)
     test['Date'] = pd.to_datetime(test.Date)
     test['is_B2B'] = 0
     test['is_B2B_Opp'] = 0
