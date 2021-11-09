@@ -1,2 +1,3 @@
-1. Get all backtest data
-2. Create a table of performance as different parameters change
+1. Finish formatting
+2. Check wins/losses tracking
+3. Check accuracy of all stats

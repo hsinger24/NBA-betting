@@ -53,6 +53,7 @@ def retrieve_advanced_stats(year, continue_value = None):
             print(game, 'advanced')
             break
     games_df_2021.reset_index(drop = True, inplace = True)
+    games_df_2021 = games_df_2021.drop_duplicates(subset = ['GAME_ID', 'TEAM_NAME'])
     games_df_2021.to_csv('current_season_data/api_data_' + str(year) + '_advanced.csv')
     return
 
@@ -89,6 +90,8 @@ def retrieve_traditional_stats(year, continue_value = None):
         except:
             print(game, 'traditional')
             break
+    games_df_2021.reset_index(drop = True, inplace = True)
+    games_df_2021 = games_df_2021.drop_duplicates(subset = ['GAME_ID', 'TEAM_NAME'])
     games_df_2021.reset_index(drop = True, inplace = True)
     games_df_2021.to_csv('current_season_data/api_data_' + str(year) + '_traditional.csv')
     return
