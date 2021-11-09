@@ -54,6 +54,8 @@ def retrieve_advanced_stats(year, continue_value = None):
             break
     games_df_2021.reset_index(drop = True, inplace = True)
     games_df_2021 = games_df_2021.drop_duplicates(subset = ['GAME_ID', 'TEAM_NAME'])
+    games_df_2021.dropna(inplace = True)
+    games_df_2021.reset_index(drop = True, inplace = True)
     games_df_2021.to_csv('current_season_data/api_data_' + str(year) + '_advanced.csv')
     return
 
@@ -92,6 +94,7 @@ def retrieve_traditional_stats(year, continue_value = None):
             break
     games_df_2021.reset_index(drop = True, inplace = True)
     games_df_2021 = games_df_2021.drop_duplicates(subset = ['GAME_ID', 'TEAM_NAME'])
+    games_df_2021.dropna(inplace = True)
     games_df_2021.reset_index(drop = True, inplace = True)
     games_df_2021.to_csv('current_season_data/api_data_' + str(year) + '_traditional.csv')
     return
@@ -204,7 +207,6 @@ def formatted_data_1(formatted_api_data):
     data.columns = columns
     odds_yesterday = pd.read_csv('current_season_data/yesterday_odds.csv', index_col = 0)
     odds_yesterday['GAME_ID'] = 0
-    odds_yesterday
     yesterday = dt.date.today() - dt.timedelta(days = 1)
     yesterday = str(yesterday)
     yesterday_formatted = data[data.Date==yesterday]

@@ -1,3 +1,2 @@
 1. Finish formatting
-2. Check wins/losses tracking
-3. Check accuracy of all stats
+2. Check accuracy of all stats
