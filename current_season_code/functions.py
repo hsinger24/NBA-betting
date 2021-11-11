@@ -867,3 +867,104 @@ def retrieve_odds(save):
     if save:
         odds_df.to_csv('current_season_data/yesterday_odds.csv')
     return odds_df
+
+def calculate_bets(todays_capital, ml_param, ml_param_underdog, small_advantage, kelly):
+    prob_output = pd.read_csv('current_season_data/todays_stats.csv', index_col = 0)
+    odds = retrieve_odds(save = False)
+    def kelly_criterion(row):
+        if row['Team1_Prob_Diff'] < 0:
+            return 0
+        else:
+            p = row['Team1_Prob']
+            q = 1-p
+            ml = row['Home_Odds']
+            if ml>=0:
+                b = (ml/100)
+            if ml<0:
+                b = (100/abs(ml))
+            kc = ((p*b) - q) / b
+            if (kc > 0.5) & (kc<0.6):
+                return kc/(kelly+2)
+            if (kc > 0.6) & (kc<0.7):
+                return kc/(kelly+4)
+            if kc > 0.7:
+                return kc/(kelly+7)
+            else:
+                return kc/kelly
+    def kelly_criterion_2(row):
+        if row['Team2_Prob_Diff'] < 0:
+            return 0
+        else:
+            p = row['Team2_Prob']
+            q = 1-p
+            ml = row['Away_Odds']
+            if ml>=0:
+                b = (ml/100)
+            if ml<0:
+                b = (100/abs(ml))
+            kc = ((p*b) - q) / b
+            if (kc > 0.5) & (kc<0.6):
+                return kc/(kelly+2)
+            if (kc > 0.6) & (kc<0.7):
+                return kc/(kelly+4)
+            if kc > 0.7:
+                return kc/(kelly+7)
+            else:
+                return kc/kelly
+    odds = odds[['Home_Team', 'Home_Odds', 'Away_Odds', 'Home_Prob', 'Away_Prob']]
+    merged = pd.merge(prob_output, odds, left_on = 'Team1', right_on = 'Home_Team')
+    merged.drop(['Home_Team', 'X'], axis = 1, inplace = True)
+    merged['Team2_Prob'] = 1-merged.Team1_Prob
+    merged['Team1_Prob_Diff'] = merged.Team1_Prob - merged.Home_Prob/100
+    merged['Team2_Prob_Diff'] = merged.Team2_Prob - merged.Away_Prob/100
+    merged['Team1_KC'] = merged.apply(kelly_criterion, axis = 1)
+    merged['Team2_KC'] = merged.apply(kelly_criterion_2, axis = 1)
+    merged['Team1_Bet'] = 0
+    merged['Team2_Bet'] = 0
+    merged['Team1_Payoff'] = 0
+    merged['Team2_Payoff'] = 0
+    for index, row in merged.iterrows():
+        if (row.Team1_KC == 0) & (row.Team2_KC == 0):
+            merged.loc[index, 'Team1_Bet'] = 0
+            merged.loc[index, 'Team2_Bet'] = 0
+            continue
+        if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<small_advantage)) | ((row.Team1_Prob_Diff<small_advantage) & (row.Team2_Prob_Diff<0)):
+            merged.loc[index, 'Team1_Bet'] = 0
+            merged.loc[index, 'Team2_Bet'] = 0
+            continue
+            
+        if row.Team1_KC>0:
+            merged.loc[index, 'Team1_Bet'] = todays_capital*row.Team1_KC
+        if row.Team2_KC>0:
+            merged.loc[index, 'Team2_Bet'] = todays_capital*row.Team2_KC
+        
+        if merged.loc[index, 'Team1_Bet']>0:
+            if row.Home_Odds<0:
+                merged.loc[index, 'Team1_Payoff'] = (merged.loc[index, 'Team1_Bet']/abs(row.Home_Odds))*100
+            if row.Home_Odds>0:
+                merged.loc[index, 'Team1_Payoff'] = merged.loc[index, 'Team1_Bet'] * (row.Home_Odds/100)
+        if merged.loc[index, 'Team2_Bet']>0:
+            if row.Away_Odds<0:
+                merged.loc[index, 'Team2_Payoff'] = (merged.loc[index, 'Team2_Bet']/abs(row.Away_Odds))*100
+            if row.Away_Odds>0:
+                merged.loc[index, 'Team2_Payoff'] = merged.loc[index, 'Team2_Bet'] * (row.Away_Odds/100)
+        
+        if (merged.loc[index, 'Team1_Bet']>0) & (row.Home_Odds<ml_param):
+            merged.loc[index, 'Team1_Bet'] = 0
+            merged.loc[index, 'Team1_Payoff'] = 0
+            continue
+        if (merged.loc[index, 'Team2_Bet']>0) & (row.Away_Odds<ml_param):
+            merged.loc[index, 'Team2_Bet'] = 0
+            merged.loc[index, 'Team2_Payoff'] = 0
+            continue
+        if (merged.loc[index, 'Team1_Bet']>0) & (row.Home_Odds>ml_param_underdog):
+            merged.loc[index, 'Team1_Bet'] = 0
+            merged.loc[index, 'Team1_Payoff'] = 0
+            continue
+        if (merged.loc[index, 'Team2_Bet']>0) & (row.Away_Odds>ml_param_underdog):
+            merged.loc[index, 'Team2_Bet'] = 0
+            merged.loc[index, 'Team2_Payoff'] = 0
+            continue
+    merged.to_csv('current_season_data/bets.csv')
+    return merged
+

@@ -172,13 +172,13 @@ def backtesting(year, starting_capital, ml_param, ml_param_underdog, small_advan
             if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<ml_param):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital
                 continue
-            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML<ml_param):
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team2_ML<ml_param):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital
                 continue
             if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML>ml_param_underdog):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital
                 continue
-            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_ML>ml_param_underdog):
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team2_ML>ml_param_underdog):
                 test_merged.loc[index, 'Money_Tracker'] = starting_capital
                 continue
         
