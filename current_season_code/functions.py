@@ -144,16 +144,20 @@ def format_api_data(year):
         record_dict[team + '_wins'] = 0.0
         record_dict[team + '_losses'] = 0.0
     for index, row in final.iterrows():
-        final.loc[index, 'Team_1_wins'] = record_dict[row.TEAM_NAME_x + "_wins"]
-        final.loc[index, 'Team_1_losses'] = record_dict[row.TEAM_NAME_x + "_losses"]
-        final.loc[index, 'Team_2_wins'] = record_dict[row.TEAM_NAME_y + "_wins"]
-        final.loc[index, 'Team_2_losses'] = record_dict[row.TEAM_NAME_y + "_losses"]
+        # final.loc[index, 'Team_1_wins'] = record_dict[row.TEAM_NAME_x + "_wins"]
+        # final.loc[index, 'Team_1_losses'] = record_dict[row.TEAM_NAME_x + "_losses"]
+        # final.loc[index, 'Team_2_wins'] = record_dict[row.TEAM_NAME_y + "_wins"]
+        # final.loc[index, 'Team_2_losses'] = record_dict[row.TEAM_NAME_y + "_losses"]
         if row.PTS_x>row.PTS_y:
             record_dict[row.TEAM_NAME_x + "_wins"] += 1.0
             record_dict[row.TEAM_NAME_y + "_losses"] += 1.0
         if row.PTS_x<row.PTS_y:
             record_dict[row.TEAM_NAME_x + "_losses"] += 1.0
             record_dict[row.TEAM_NAME_y + "_wins"] += 1.0
+        final.loc[index, 'Team_1_wins'] = record_dict[row.TEAM_NAME_x + "_wins"]
+        final.loc[index, 'Team_1_losses'] = record_dict[row.TEAM_NAME_x + "_losses"]
+        final.loc[index, 'Team_2_wins'] = record_dict[row.TEAM_NAME_y + "_wins"]
+        final.loc[index, 'Team_2_losses'] = record_dict[row.TEAM_NAME_y + "_losses"]
     final['Team_1_win_pct'] = final.Team_1_wins/(final.Team_1_wins + final.Team_1_losses)
     final['Team_2_win_pct'] = final.Team_2_wins/(final.Team_2_wins + final.Team_2_losses)
 
@@ -430,13 +434,15 @@ def formatted_data_2():
             df_team['stat_of_interest'] = np.NaN
             for index, row in df_team.iterrows():
                 if row['Team'] == team:
+                    df_team.loc[index, 'stat_of_interest'] = row[col]
                     stat_col = df_team['stat_of_interest']
                     stats.loc[index, col + '_Agg'] = stat_col.mean()
-                    df_team.loc[index, 'stat_of_interest'] = row[col]
+                    # df_team.loc[index, 'stat_of_interest'] = row[col]
                 else:
+                    df_team.loc[index, 'stat_of_interest'] = row[col + '_Opp']
                     stat_col = df_team['stat_of_interest']
                     stats.loc[index, col + '_Agg' + '_Opp'] = stat_col.mean()
-                    df_team.loc[index, 'stat_of_interest'] = row[col + '_Opp']
+                    # df_team.loc[index, 'stat_of_interest'] = row[col + '_Opp']
 
     # Getting desired columns
     cols_of_interest = ['Game_ID', 'Date', 'Team', 'Team_Opp', 'FGM_Per100_Agg', 'FGA_Per100_Agg', 'FG_PCT_Agg', 
