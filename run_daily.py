@@ -25,11 +25,10 @@ continue_value_traditional = 171
 
 ##########RUN##########
 
-# odds = retrieve_odds(save = False)
 # retrieve_advanced_stats(year = year, continue_value=continue_value_advanced)
 # retrieve_traditional_stats(year = year, continue_value=continue_value_traditional)
 # formatted_api_data = format_api_data(year = year)
 # formatted_data_1(formatted_api_data)
 # final_stats = formatted_data_2()
-
-# odds = retrieve_odds(save = True)
+odds = retrieve_odds(save = True)
+todays_games(odds)

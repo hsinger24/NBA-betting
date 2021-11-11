@@ -560,6 +560,236 @@ def formatted_data_2():
     final_stats.to_csv('current_season_data/season_stats.csv')
     return final_stats
 
+def todays_games(odds):
+    data = pd.read_csv('current_season_data/season_stats.csv', index_col = 0)
+    schedule = pd.read_csv('current_season_data/schedule.csv', header = 0)
+    team_map = {
+        'Cleveland Cavaliers' : 'Cavaliers',
+        'Charlotte Hornets' : 'Hornets',
+        'San Antonio Spurs' : 'Spurs',
+        'Indiana Pacers' : 'Pacers',
+        'Portland Trail Blazers' : 'Trail Blazers',
+        'Philadelphia 76ers' : '76ers',
+        'Washington Wizards' : 'Wizards',
+        'Atlanta Hawks' : 'Hawks',
+        'Chicago Bulls' : 'Bulls',
+        'Boston Celtics' : 'Celtics',
+        'Toronto Raptors' : 'Raptors',
+        'New York Knicks' : 'Knicks',
+        'Denver Nuggets' : 'Nuggets',
+        'Memphis Grizzlies' : 'Grizzlies',
+        'Orlando Magic' : 'Magic',
+        'Minnesota Timberwolves' : 'Timberwolves',
+        'Oklahoma City Thunder' : 'Thunder',
+        'Los Angeles Clippers' : 'Clippers',
+        'Milwaukee Bucks' : 'Bucks',
+        'Detroit Pistons' : 'Pistons',
+        'Miami Heat' : 'Heat',
+        'Dallas Mavericks' : 'Mavericks',
+        'Sacramento Kings' : 'Kings',
+        'Utah Jazz' : 'Jazz',
+        'New Orleans Pelicans' : 'Pelicans',
+        'Phoenix Suns' : 'Suns',
+        'Houston Rockets' : 'Rockets',
+        'Los Angeles Lakers' : 'Lakers',
+        'Brooklyn Nets' : 'Nets',
+        'Golden State Warriors' : 'Warriors'
+    }
+    intermediate = pd.DataFrame()
+    for index, row in odds.iterrows():
+        home_team = row.Home_Team
+        away_team = row.Away_Team
+        home_df = data.loc[(data.Team1==home_team) | (data.Team2==home_team)]
+        home_df.reset_index(inplace = True, drop = True)
+        away_df = data.loc[(data.Team1==away_team) | (data.Team2==away_team)]
+        away_df.reset_index(inplace = True, drop = True)
+        home_row = home_df.loc[len(home_df)-1, :]
+        away_row = away_df.loc[len(away_df)-1,:]
+        if home_row.Team1==home_team:
+            cols_home = list()
+            for index, value in home_row.iteritems():
+                if index.startswith('Team1'):
+                    cols_home.append(index)
+                final_home = home_row[cols_home]
+        if home_row.Team2==home_team:
+            cols_home = list()
+            for index, value in home_row.iteritems():
+                if index.startswith('Team2'):
+                    cols_home.append(index)
+                final_home = home_row[cols_home]
+        if away_row.Team1==away_team:
+            cols_away = list()
+            for index, value in away_row.iteritems():
+                if index.startswith('Team1'):
+                    cols_away.append(index)
+                final_away = away_row[cols_away]
+        if away_row.Team2==away_team:
+            cols_away = list()
+            for index, value in away_row.iteritems():
+                if index.startswith('Team2'):
+                    cols_away.append(index)
+                final_away = away_row[cols_away]
+        row_total = final_home.append(final_away)
+        row_total['Game_ID'] = 0
+        row_total['Date'] = dt.date.today()
+        temp_df = pd.DataFrame(columns = list(row_total.index))
+        temp_df = temp_df.append(row_total, ignore_index = True)
+        temp_df.columns = ['Team1', 'Team1_FGM_Per100_Agg', 'Team1_FGA_Per100_Agg', 'Team1_FG_PCT_Agg', 'Team1_FG3M_Per100_Agg',
+                        'Team1_FG3A_Per100_Agg', 'Team1_FG3_PCT_Agg', 'Team1_FTM_Per100_Agg', 'Team1_FTA_Per100_Agg',
+                        'Team1_FT_PCT_Agg', 'Team1_OREB_Per100_Agg', 'Team1_DREB_Per100_Agg', 'Team1_REB_Per100_Agg',
+                        'Team1_AST_Per100_Agg', 'Team1_STL_Per100_Agg', 'Team1_BLK_Per100_Agg','Team1_TO_Per100_Agg',
+                        'Team1_PF_Per100_Agg', 'Team1_PTS_Per100_Agg', 'Team1_PLUS_MINUS_Per100_Agg', 'Team1_E_OFF_RATING_Agg',
+                        'Team1_OFF_RATING_Agg', 'Team1_E_DEF_RATING_Agg', 'Team1_DEF_RATING_Agg', 'Team1_E_NET_RATING_Agg',
+                        'Team1_NET_RATING_Agg', 'Team1_AST_PCT_Agg', 'Team1_AST_TOV_Agg', 'Team1_AST_RATIO_Agg',
+                        'Team1_OREB_PCT_Agg', 'Team1_DREB_PCT_Agg', 'Team1_REB_PCT_Agg', 'Team1_E_TM_TOV_PCT_Agg',
+                        'Team1_TM_TOV_PCT_Agg', 'Team1_EFG_PCT_Agg', 'Team1_TS_PCT_Agg', 'Team1_USG_PCT_Agg',
+                        'Team1_E_USG_PCT_Agg', 'Team1_E_PACE_Agg', 'Team1_PACE_Agg', 'Team1_PACE_PER40_Agg',
+                        'Team1_POSS_Agg', 'Team1_PIE_Agg', 'Team1_Wins', 'Team1_Losses', 'Team1_Win_Pct',
+                        'Team1_is_B2B', 'Team1_is_B2B_First', 'Team1_is_B2B_Second', 'Team1_Days_Rest_Team',
+                        'Team1_Days_Next Game', 'Team1_is_Home', 'Team1_FGM_Per100_Agg_Opp', 'Team1_FGA_Per100_Agg_Opp',
+                        'Team1_FG_PCT_Agg_Opp', 'Team1_FG3M_Per100_Agg_Opp', 'Team1_FG3A_Per100_Agg_Opp', 'Team1_FG3_PCT_Agg_Opp',
+                        'Team1_FTM_Per100_Agg_Opp', 'Team1_FTA_Per100_Agg_Opp', 'Team1_FT_PCT_Agg_Opp', 'Team1_OREB_Per100_Agg_Opp',
+                        'Team1_DREB_Per100_Agg_Opp', 'Team1_REB_Per100_Agg_Opp', 'Team1_AST_Per100_Agg_Opp', 'Team1_STL_Per100_Agg_Opp',
+                        'Team1_BLK_Per100_Agg_Opp', 'Team1_TO_Per100_Agg_Opp', 'Team1_PF_Per100_Agg_Opp', 'Team1_PTS_Per100_Agg_Opp',
+                        'Team1_PLUS_MINUS_Per100_Agg_Opp', 'Team1_E_OFF_RATING_Agg_Opp', 'Team1_OFF_RATING_Agg_Opp',
+                        'Team1_E_DEF_RATING_Agg_Opp', 'Team1_DEF_RATING_Agg_Opp', 'Team1_E_NET_RATING_Agg_Opp', 'Team1_NET_RATING_Agg_Opp',
+                        'Team1_AST_PCT_Agg_Opp', 'Team1_AST_TOV_Agg_Opp', 'Team1_AST_RATIO_Agg_Opp', 'Team1_OREB_PCT_Agg_Opp',
+                        'Team1_DREB_PCT_Agg_Opp', 'Team1_REB_PCT_Agg_Opp', 'Team1_E_TM_TOV_PCT_Agg_Opp', 'Team1_TM_TOV_PCT_Agg_Opp',
+                        'Team1_EFG_PCT_Agg_Opp', 'Team1_TS_PCT_Agg_Opp', 'Team1_USG_PCT_Agg_Opp', 'Team1_E_USG_PCT_Agg_Opp',
+                        'Team1_E_PACE_Agg_Opp', 'Team1_PACE_Agg_Opp', 'Team1_PACE_PER40_Agg_Opp', 'Team1_POSS_Agg_Opp',
+                        'Team1_PIE_Agg_Opp', 'Team1_Wins_Opp', 'Team1_Losses_Opp', 'Team1_Win_Pct_Opp', 'Team1_is_B2B_Opp',
+                        'Team1_is_B2B_First_Opp', 'Team1_is_B2B_Second_Opp', 'Team1_Days_Rest_Team_Opp', 'Team1_Days_Next Game_Opp',
+                        'Team1_is_Home_Opp', 'Team2', 'Team2_FGM_Per100_Agg', 'Team2_FGA_Per100_Agg', 'Team2_FG_PCT_Agg',
+                        'Team2_FG3M_Per100_Agg', 'Team2_FG3A_Per100_Agg', 'Team2_FG3_PCT_Agg', 'Team2_FTM_Per100_Agg',
+                        'Team2_FTA_Per100_Agg', 'Team2_FT_PCT_Agg', 'Team2_OREB_Per100_Agg', 'Team2_DREB_Per100_Agg',
+                        'Team2_REB_Per100_Agg', 'Team2_AST_Per100_Agg', 'Team2_STL_Per100_Agg', 'Team2_BLK_Per100_Agg',
+                        'Team2_TO_Per100_Agg', 'Team2_PF_Per100_Agg', 'Team2_PTS_Per100_Agg', 'Team2_PLUS_MINUS_Per100_Agg',
+                        'Team2_E_OFF_RATING_Agg', 'Team2_OFF_RATING_Agg', 'Team2_E_DEF_RATING_Agg', 'Team2_DEF_RATING_Agg',
+                        'Team2_E_NET_RATING_Agg', 'Team2_NET_RATING_Agg', 'Team2_AST_PCT_Agg', 'Team2_AST_TOV_Agg',
+                        'Team2_AST_RATIO_Agg', 'Team2_OREB_PCT_Agg', 'Team2_DREB_PCT_Agg', 'Team2_REB_PCT_Agg',
+                        'Team2_E_TM_TOV_PCT_Agg', 'Team2_TM_TOV_PCT_Agg_y', 'Team2_EFG_PCT_Agg', 'Team2_TS_PCT_Agg',
+                        'Team2_USG_PCT_Agg', 'Team2_E_USG_PCT_Agg', 'Team2_E_PACE_Agg', 'Team2_PACE_Agg',
+                        'Team2_PACE_PER40_Agg', 'Team2_POSS_Agg', 'Team2_PIE_Agg', 'Team2_Wins', 'Team2_Losses',
+                        'Team2_Win_Pct', 'Team2_is_B2B', 'Team2_is_B2B_First', 'Team2_is_B2B_Second',
+                        'Team2_Days_Rest_Team', 'Team2_Days_Next Game', 'Team2_is_Home', 'Team2_FGM_Per100_Agg_Opp',
+                        'Team2_FGA_Per100_Agg_Opp', 'Team2_FG_PCT_Agg_Opp', 'Team2_FG3M_Per100_Agg_Opp', 'Team2_FG3A_Per100_Agg_Opp',
+                        'Team2_FG3_PCT_Agg_Opp', 'Team2_FTM_Per100_Agg_Opp', 'Team2_FTA_Per100_Agg_Opp', 'Team2_FT_PCT_Agg_Opp',
+                        'Team2_OREB_Per100_Agg_Opp', 'Team2_DREB_Per100_Agg_Opp', 'Team2_REB_Per100_Agg_Opp', 'Team2_AST_Per100_Agg_Opp',
+                        'Team2_STL_Per100_Agg_Opp', 'Team2_BLK_Per100_Agg_Opp', 'Team2_TO_Per100_Agg_Opp', 'Team2_PF_Per100_Agg_Opp',
+                        'Team2_PTS_Per100_Agg_Opp', 'Team2_PLUS_MINUS_Per100_Agg_Opp', 'Team2_E_OFF_RATING_Agg_Opp',
+                        'Team2_OFF_RATING_Agg_Opp', 'Team2_E_DEF_RATING_Agg_Opp', 'Team2_DEF_RATING_Agg_Opp',
+                        'Team2_E_NET_RATING_Agg_Opp', 'Team2_NET_RATING_Agg_Opp', 'Team2_AST_PCT_Agg_Opp', 'Team2_AST_TOV_Agg_Opp',
+                        'Team2_AST_RATIO_Agg_Opp', 'Team2_OREB_PCT_Agg_Opp', 'Team2_DREB_PCT_Agg_Opp', 'Team2_REB_PCT_Agg_Opp',
+                        'Team2_E_TM_TOV_PCT_Agg_Opp', 'Team2_TM_TOV_PCT_Agg_Opp', 'Team2_EFG_PCT_Agg_Opp', 'Team2_TS_PCT_Agg_Opp',
+                        'Team2_USG_PCT_Agg_Opp', 'Team2_E_USG_PCT_Agg_Opp', 'Team2_E_PACE_Agg_Opp', 'Team2_PACE_Agg_Opp',
+                        'Team2_PACE_PER40_Agg_Opp', 'Team2_POSS_Agg_Opp', 'Team2_PIE_Agg_Opp', 'Team2_Wins_Opp',
+                        'Team2_Losses_Opp', 'Team2_Win_Pct_Opp', 'Team2_is_B2B_Opp', 'Team2_is_B2B_First_Opp',
+                        'Team2_is_B2B_Second_Opp', 'Team2_Days_Rest_Team_Opp', 'Team2_Days_Next Game_Opp', 'Team2_is_Home_Opp',
+                        'Game_ID', 'Date']
+        temp_df = temp_df[data.columns]
+        intermediate = intermediate.append(temp_df)
+    intermediate.reset_index(drop = True, inplace = True)
+    final = pd.DataFrame()
+    team1_stats = list()
+    team2_stats = list()
+    for column in intermediate.columns:
+        if (column.startswith('Team1')) & (not column.endswith('Opp')):
+            team1_stats.append(column)
+        if (column.startswith('Team2')) & (not column.endswith('Opp')):
+            team2_stats.append(column)
+    final['Game_ID'] = intermediate.Game_ID
+    final['Date'] = intermediate.Date
+    final['Team1'] = intermediate.Team1
+    final['Team2'] = intermediate.Team2
+    for column in team1_stats:
+        if column != 'Team1':
+            final[column] = intermediate[column]
+    for column in team2_stats:
+        if column != 'Team2':
+            col_name = 'Team1_' + column[6:] + '_Opp'
+            if col_name == 'Team1_TM_TOV_PCT_Agg_y_Opp':
+                col_name = 'Team1_TM_TOV_PCT_Agg_Opp'
+            final[col_name] = intermediate[column]
+    for column in team2_stats:
+        if column != 'Team2':
+            final[column] = intermediate[column]
+    for column in team1_stats:
+        if column != 'Team1':
+            col_name = 'Team2_' + column[6:] + '_Opp'
+            final[col_name] = intermediate[column]
+    final['Team1_is_Home'] = 1
+    final['Team2_is_Home'] = 0
+    final['Team1_is_Home_Opp'] = 0
+    final['Team2_is_Home_Opp'] = 1
+    final['Team1_is_B2B'] = 0
+    final['Team1_is_B2B_Second'] = 0
+    final['Team1_is_B2B_First'] = 0
+    final['Team1_is_B2B_Opp'] = 0
+    final['Team1_is_B2B_Second_Opp'] = 0
+    final['Team1_is_B2B_First_Opp'] = 0
+
+    schedule['Date'] = pd.to_datetime(schedule.Date)
+    schedule['Home_Team'] = schedule.Home_Team.apply(lambda x: team_map[x])
+    schedule['Away_Team'] = schedule.Away_Team.apply(lambda x: team_map[x])
+
+    for index, row in final.iterrows():
+        team = row.Team1
+        games_played = row.Team1_Wins + row.Team1_Losses
+        df_1 = schedule[(schedule.Home_Team==team) | (schedule.Away_Team == team)]
+        df_1.reset_index(inplace = True)
+        df_1.reset_index(inplace = True)
+        df_1.rename(columns = {'level_0': 'Game_Number'}, inplace = True)
+        df_1['Game_Number'] = df_1.Game_Number + 1
+        row_today = df_1[df_1.Game_Number==(games_played+1)]
+        day = row_today.Date.values[0]
+        row_prior = df_1[df_1.Game_Number==games_played]
+        day_prior = row_prior.Date.values[0]
+        row_after = df_1[df_1.Game_Number==(games_played+2)]
+        day_after = row_after.Date.values[0]
+        final.loc[index, 'Team1_Days_Rest_Team'] = int(day-day_prior)/86400000000000
+        final.loc[index, 'Team1_Days_Next Game'] = int(day_after-day)/86400000000000
+        if (int(day-day_prior)) == (172800000000000/2):
+            final.loc[index, 'Team1_is_B2B'] = 1
+            final.loc[index, 'Team1_is_B2B_Second'] = 1
+        if (int(day-day_after)) == (-172800000000000/2):
+            final.loc[index, 'Team1_is_B2B'] = 1
+            final.loc[index, 'Team1_is_B2B_First'] = 1
+    
+    for index, row in final.iterrows():
+        team = row.Team2
+        games_played = row.Team2_Wins + row.Team2_Losses
+        df_1 = schedule[(schedule.Home_Team==team) | (schedule.Away_Team == team)]
+        df_1.reset_index(inplace = True)
+        df_1.reset_index(inplace = True)
+        df_1.rename(columns = {'level_0': 'Game_Number'}, inplace = True)
+        df_1['Game_Number'] = df_1.Game_Number + 1
+        row_today = df_1[df_1.Game_Number==(games_played+1)]
+        day = row_today.Date.values[0]
+        row_prior = df_1[df_1.Game_Number==games_played]
+        day_prior = row_prior.Date.values[0]
+        row_after = df_1[df_1.Game_Number==(games_played+2)]
+        day_after = row_after.Date.values[0]
+        final.loc[index, 'Team1_Days_Rest_Team_Opp'] = int(day-day_prior)/86400000000000
+        final.loc[index, 'Team1_Days_Next Game_Opp'] = int(day_after-day)/86400000000000
+        if (int(day-day_prior)) == (172800000000000/2):
+            final.loc[index, 'Team1_is_B2B_Opp'] = 1
+            final.loc[index, 'Team1_is_B2B_Second_Opp'] = 1
+        if (int(day-day_after)) == (-172800000000000/2):
+            final.loc[index, 'Team1_is_B2B_Opp'] = 1
+            final.loc[index, 'Team1_is_B2B_First_Opp'] = 1
+    final['Team2_is_B2B'] = final.Team1_is_B2B_Opp
+    final['Team2_is_B2B_Second'] = final.Team1_is_B2B_Second_Opp
+    final['Team2_is_B2B_First'] = final.Team1_is_B2B_First_Opp
+    final['Team2_is_B2B_Opp'] = final.Team1_is_B2B
+    final['Team2_is_B2B_Second_Opp'] = final.Team1_is_B2B_Second
+    final['Team2_is_B2B_First_Opp'] = final.Team1_is_B2B_First
+    final['Team2_Days_Rest_Team'] = final.Team1_Days_Rest_Team_Opp
+    final['Team2_Days_Next Game'] = final['Team1_Days_Next Game_Opp']
+    final['Team2_Days_Rest_Team_Opp'] = final.Team1_Days_Rest_Team
+    final['Team2_Days_Next Game_Opp'] = final['Team1_Days_Next Game']
+    final.to_csv('current_season_data/todays_stats.csv')
+    return final
+
 def calculate_odds(odds):
     if odds<0:
         return (abs(odds)/(abs(odds)+100))*100
