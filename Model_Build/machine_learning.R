@@ -1,5 +1,5 @@
 ########## Setting working directory and imports ##########
-setwd("~/Desktop/NBA-betting")
+setwd("~/Desktop/NBA-betting/Model_Build")
 library(MASS)
 library(dplyr)
 library(caret)
@@ -24,12 +24,16 @@ data$Team1_is_B2B_First_Opp = factor(as.character(data$Team1_is_B2B_First_Opp), 
 data$Team1_is_B2B_Second_Opp = factor(as.character(data$Team1_is_B2B_Second_Opp), levels = c('0','1'), labels = c('N', 'Y'))
 data$Team1_is_Home_Opp = factor(as.character(data$Team1_is_Home_Opp), levels = c('0','1'), labels = c('N', 'Y'))
 # Getting training data
-train = (Game_ID<21800001)
-training_data = data[train, ]
-training_data = subset(training_data, select = -c(1,2,3,4,106))
-training_target = Team1_Won[train]
+
+# train = (Game_ID<21800001)
+# training_data = data[train, ]
+# training_data = subset(training_data, select = -c(1,2,3,4,106))
+training_data = subset(data, select = -c(1,2,3,4,106))
+training_target = Team1_Won
 training_target = factor(as.character(training_target), levels = c('0','1'), labels = c('L', 'W'))
+
 # Getting test data
+
 test_data = data[!train, ]
 test_data = subset(test_data, select = -c(1,2,3,4,106))
 test_target = Team1_Won[!train]

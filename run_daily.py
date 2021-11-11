@@ -30,5 +30,8 @@ continue_value_traditional = 171
 # formatted_api_data = format_api_data(year = year)
 # formatted_data_1(formatted_api_data)
 # final_stats = formatted_data_2()
-odds = retrieve_odds(save = True)
-todays_games(odds)
+# odds = retrieve_odds(save = True)
+# todays_games(odds)
+
+#At this point, run the R file
+
