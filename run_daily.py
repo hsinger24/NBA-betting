@@ -20,8 +20,8 @@ from current_season_code.functions import *
 ##########NECESSARY VARIABLES##########
 
 year = 2021
-continue_value_advanced = 155
-continue_value_traditional = 155
+continue_value_advanced = 171
+continue_value_traditional = 171
 
 ##########RUN##########
 
