@@ -968,3 +968,47 @@ def calculate_bets(todays_capital, ml_param, ml_param_underdog, small_advantage,
     merged.to_csv('current_season_data/bets.csv')
     return merged
 
+def calculate_bet_results(yesterdays_capital):
+    yesterdays_bets = pd.read_csv('current_season_data/bets.csv', index_col = 0)
+    formatted_data = pd.read_csv('current_season_data/formatted_data_1.csv', index_col = 0)
+
+    yesterday = dt.date.today() - dt.timedelta(days = 1)
+    yesterday = str(yesterday)
+    yesterdays_games = formatted_data[formatted_data.Date==yesterday]
+
+    yesterdays_winners = list()
+    for index, row in yesterdays_games.iterrows():
+        if row.PTS>row.PTS_Opp:
+            yesterdays_winners.append(row.Team)
+        else:
+            yesterdays_winners.append(row.Team_Opp)
+    
+    results = pd.DataFrame()
+    yesterdays_bets['Won_Bet'] = 0
+    yesterdays_bets['Money_Tracker'] = 0
+    for index, row in yesterdays_bets.iterrows():
+        if (row.Team1_Bet<=0) & (row.Team2_Bet<=0):
+            yesterdays_bets.loc[index, 'Won_Bet'] = -1
+        if row.Team1_Bet>0:
+            if row.Team1 in yesterdays_winners:
+                yesterdays_bets.loc[index, 'Won_Bet'] = 1
+        if row.Team2_Bet>0:
+            if row.Team2 in yesterdays_winners:
+                yesterdays_bets.loc[index, 'Won_Bet'] = 1
+        
+        if index==0:
+            if yesterdays_bets.loc[index, 'Won_Bet']==1:
+                yesterdays_bets.loc[index, 'Money_Tracker'] = yesterdays_capital + row.Team1_Payoff + row.Team2_Payoff
+            else:
+                yesterdays_bets.loc[index, 'Money_Tracker'] = yesterdays_capital - row.Team1_Bet - row.Team2_Bet
+        else:
+            if yesterdays_bets.loc[index, 'Won_Bet']==1:
+                yesterdays_bets.loc[index, 'Money_Tracker'] = yesterdays_bets.loc[(index-1), 'Money_Tracker'] + row.Team1_Payoff + row.Team2_Payoff
+            else:
+                yesterdays_bets.loc[index, 'Money_Tracker'] = yesterdays_bets.loc[(index-1), 'Money_Tracker'] - row.Team1_Bet - row.Team2_Bet
+            
+    string = f"Today's capital is {yesterdays_bets.loc[len(yesterdays_bets)-1, 'Money_Tracker']}"
+    print(string)
+
+    yesterdays_bets.to_csv('current_season_data/results_tracker.csv')
+    return
