@@ -33,7 +33,7 @@ def retrieve_advanced_stats(year, continue_value = None):
         games_df_2021 = pd.DataFrame()
     if continue_value is not None:
         games_df_2021 = pd.read_csv('current_season_data/api_data_' + str(year) + '_advanced.csv', index_col = 0)
-        game_ids = list(range(continue_value,1231))
+        game_ids = list(range(continue_value,(continue_value+18)))
     for game in game_ids:
         try:
             game = str(game)
@@ -74,7 +74,7 @@ def retrieve_traditional_stats(year, continue_value = None):
         games_df_2021 = pd.DataFrame()
     if continue_value is not None:
         games_df_2021 = pd.read_csv('current_season_data/api_data_' + str(year) + '_traditional.csv', index_col = 0)
-        game_ids = list(range(continue_value,1231))
+        game_ids = list(range(continue_value,(continue_value+18)))
     for game in game_ids:
         try:
             game = str(game)
@@ -1010,5 +1010,8 @@ def calculate_bet_results(yesterdays_capital):
     string = f"Today's capital is {yesterdays_bets.loc[len(yesterdays_bets)-1, 'Money_Tracker']}"
     print(string)
 
-    yesterdays_bets.to_csv('current_season_data/results_tracker.csv')
+    # yesterdays_bets.to_csv('current_season_data/results_tracker.csv')
+    old_results = pd.read_csv('current_season_data/results_tracker.csv', index_col = 0)
+    results = old_results.append(yesterdays_bets)
+    results.to_csv('current_season_data/results_tracker.csv')
     return

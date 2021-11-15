@@ -19,11 +19,11 @@ from current_season_code.functions import *
 
 ##########NECESSARY VARIABLES##########
 
-todays_capital = 100653
-yesterdays_capital = 100653
+todays_capital = 106853
+yesterdays_capital = 106853
 year = 2021
-continue_value_advanced = 185
-continue_value_traditional = 185
+continue_value_advanced = 192
+continue_value_traditional = 192
 ml_param = -1750
 ml_param_underdog = 1000
 small_advantage = .025
@@ -42,4 +42,4 @@ kelly = 12
 
 ########## RUN THE R FILE ##########
 
-# calculate_bets(todays_capital = todays_capital, ml_param = ml_param, ml_param_underdog = ml_param_underdog, small_advantage = small_advantage, kelly = kelly)
+calculate_bets(todays_capital = todays_capital, ml_param = ml_param, ml_param_underdog = ml_param_underdog, small_advantage = small_advantage, kelly = kelly)
