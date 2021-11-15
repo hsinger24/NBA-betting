@@ -1,5 +1,5 @@
 ########## Setting working directory and imports ##########
-setwd("~/Desktop/NBA-betting")
+setwd("~/Desktop/NBA-betting/Model_Build")
 logistic_model = readRDS('logistic_model.rds')
 
 ########## Importing data and getting test data ##########
@@ -23,6 +23,7 @@ train = (Game_ID>21700001 & Game_ID<21800001)
 test_data = data[train, ]
 test_data = test_data[160:1214,]
 test_data[,'Team1_Win_Prob'] = predict(logistic_model, test_data, type = 'raw')
+test_data[,'Team1_Win_Prob'] = 0
 test_target = Team1_Won[train]
 test_target = test_target[160:1214]
 predictions = predict(logistic_model, test_data, type = 'raw')

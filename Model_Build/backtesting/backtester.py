@@ -1,5 +1,14 @@
 import pandas as pd
 import datetime as dt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from keras.models import Sequential
+from keras.layers import Dense
+from keras import regularizers
+import pydot
+from IPython.display import SVG
+from keras.utils.vis_utils import model_to_dot
+from keras.models import load_model
 
 ##########BACKTESTING FUNCTIONS##########
 def convert_odds(x):
@@ -106,7 +115,7 @@ def backtesting(year, starting_capital, ml_param, ml_param_underdog, small_advan
             else:
                 return kc/kelly
     # Creating necessary columns
-    test_merged = pd.read_csv('data/test_merged_' + str(year) + '.csv', index_col = 0)
+    test_merged = pd.read_csv('../data/test_merged_' + str(year) + '.csv', index_col = 0)
     test_merged['Team1_ML'] = 0
     test_merged['Team2_ML'] = 0
     for index, row in test_merged.iterrows():
@@ -209,32 +218,32 @@ def backtesting(year, starting_capital, ml_param, ml_param_underdog, small_advan
                     test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
                 if row.Team2_KC>0:
                     test_merged.loc[index, 'Team2_Bet'] = starting_capital*row.Team2_KC
-            else:
-                if row.Team1_KC>0:
-                    if row.Date == dates[0]:
-                        test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
-                    else:
-                        yesterday_index = dates.index(row.Date)-1
-                        yesterday = dates[yesterday_index]
-                        yesterday_df = test_merged.loc[test_merged.Date==yesterday, :]
-                        yesterday_df.reset_index(drop = True, inplace = True)
-                        bet_capital = yesterday_df.loc[len(yesterday_df)-1, 'Money_Tracker']
-                        test_merged.loc[index, 'Team1_Bet'] = bet_capital*row.Team1_KC
-                if row.Team2_KC>0:
-                    if row.Date == dates[0]:
-                        test_merged.loc[index, 'Team2_Bet'] = starting_capital*row.Team2_KC
-                    else:
-                        yesterday_index = dates.index(row.Date)-1
-                        yesterday = dates[yesterday_index]
-                        yesterday_df = test_merged.loc[test_merged.Date==yesterday, :]
-                        yesterday_df.reset_index(drop = True, inplace = True)
-                        bet_capital = yesterday_df.loc[len(yesterday_df)-1, 'Money_Tracker']
-                        test_merged.loc[index, 'Team2_Bet'] = bet_capital*row.Team2_KC
             # else:
             #     if row.Team1_KC>0:
-            #         test_merged.loc[index, 'Team1_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team1_KC
+            #         if row.Date == dates[0]:
+            #             test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
+            #         else:
+            #             yesterday_index = dates.index(row.Date)-1
+            #             yesterday = dates[yesterday_index]
+            #             yesterday_df = test_merged.loc[test_merged.Date==yesterday, :]
+            #             yesterday_df.reset_index(drop = True, inplace = True)
+            #             bet_capital = yesterday_df.loc[len(yesterday_df)-1, 'Money_Tracker']
+            #             test_merged.loc[index, 'Team1_Bet'] = bet_capital*row.Team1_KC
             #     if row.Team2_KC>0:
-            #         test_merged.loc[index, 'Team2_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team2_KC
+            #         if row.Date == dates[0]:
+            #             test_merged.loc[index, 'Team2_Bet'] = starting_capital*row.Team2_KC
+            #         else:
+            #             yesterday_index = dates.index(row.Date)-1
+            #             yesterday = dates[yesterday_index]
+            #             yesterday_df = test_merged.loc[test_merged.Date==yesterday, :]
+            #             yesterday_df.reset_index(drop = True, inplace = True)
+            #             bet_capital = yesterday_df.loc[len(yesterday_df)-1, 'Money_Tracker']
+            #             test_merged.loc[index, 'Team2_Bet'] = bet_capital*row.Team2_KC
+            else:
+                if row.Team1_KC>0:
+                    test_merged.loc[index, 'Team1_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team1_KC
+                if row.Team2_KC>0:
+                    test_merged.loc[index, 'Team2_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team2_KC
 
             # Setting payoffs
             if test_merged.loc[index, 'Team1_Bet']>0:
@@ -292,7 +301,247 @@ def backtesting(year, starting_capital, ml_param, ml_param_underdog, small_advan
 
     # Saving file if save_file argument is true
     if save_file:
-        test_merged.to_csv('data/test_kc_'+str(year)+'.csv')
+        test_merged.to_csv('../data/test_kc_'+str(year)+'.csv')
+        return test_merged
+    else:
+        return test_merged
+
+def backtesting_nn(year, starting_capital, ml_param, ml_param_underdog, small_advantage, kelly, fixed_capital, save_file = True):
+    def kelly_criterion(row):
+        if row['Team1_Prob_Diff']<0:
+            return 0
+        else:
+            p = row['Team1_Win_Prob']
+            q = 1-p
+            ml = row['Team1_ML']
+            if ml>=0:
+                b = (ml/100)
+            if ml<0:
+                b = (100/abs(ml))
+            kc = ((p*b) - q) / b
+            if (kc > 0.5) & (kc<0.6):
+                return kc/(kelly+2)
+            if (kc > 0.6) & (kc<0.7):
+                return kc/(kelly+4)
+            if kc > 0.7:
+                return kc/(kelly+7)
+            else:
+                return kc/kelly
+    def kelly_criterion_2(row):
+        if row['Team2_Prob_Diff']<0:
+            return 0
+        else:
+            p = 1 - row['Team1_Win_Prob']
+            q = 1-p
+            ml = row['Team2_ML']
+            if ml>=0:
+                b = (ml/100)
+            if ml<0:
+                b = (100/abs(ml))
+            kc = ((p*b) - q) / b
+            if (kc > 0.5) & (kc<0.6):
+                return kc/(kelly+2)
+            if (kc > 0.6) & (kc<0.7):
+                return kc/(kelly+4)
+            if kc > 0.7:
+                return kc/(kelly+7)
+            else:
+                return kc/kelly
+
+    # Creating necessary columns
+    test_merged = pd.read_csv('Model_Build/data/test_merged_' + str(year) + '_nn.csv', index_col = 0)
+    model = load_model('Model_Build/dl_model.h5')
+    inputs = test_merged.iloc[:, 4:(test_merged.shape[1]-6)]
+    print(inputs)
+    scaler = StandardScaler()
+    inputs = scaler.fit_transform(inputs)
+    test_merged['Team1_Win_Prob'] = model.predict(inputs)
+    test_merged['Team1_ML'] = 0
+    test_merged['Team2_ML'] = 0
+    for index, row in test_merged.iterrows():
+        if row['Team1.x']==row['Team1.y']:
+            test_merged.loc[index, 'Team1_ML'] = row['ML1']
+            test_merged.loc[index, 'Team2_ML'] = row['ML2']
+        else:
+            test_merged.loc[index, 'Team1_ML'] = row['ML2']
+            test_merged.loc[index, 'Team2_ML'] = row['ML1']
+    drop_cols = ['Team1.y', 'Team2.y', 'ML1', 'ML2']
+    test_merged.drop(drop_cols, axis = 1, inplace = True)
+    test_merged['Team1_ML_Prob'] = test_merged['Team1_ML'].apply(convert_odds)
+    test_merged['Team2_ML_Prob'] = test_merged['Team2_ML'].apply(convert_odds)
+    test_merged['Team1_Prob_Diff'] = test_merged['Team1_Win_Prob'] - test_merged['Team1_ML_Prob']
+    test_merged['Team2_Prob_Diff'] = (1-test_merged['Team1_Win_Prob']) - test_merged['Team2_ML_Prob']
+    test_merged['Team1_KC'] = test_merged.apply(kelly_criterion, axis = 1)
+    test_merged['Team2_KC'] = test_merged.apply(kelly_criterion_2, axis = 1)
+
+    # Only getting columns I need
+    keep_columns = ['Game_ID', 'Date', 'Team1.x', 'Team2.x']+list(test_merged.columns)[-10:]
+    test_merged = test_merged[keep_columns]
+    test_merged.columns = ['Game_ID', 'Date', 'Team1', 'Team2', 'Team1_Won', 'Team1_Win_Prob', 'Team1_ML', 
+    'Team2_ML', 'Team1_ML_Prob', 'Team2_ML_Prob', 'Team1_Prob_Diff', 'Team2_Prob_Diff', 'Team1_KC', 'Team2_KC']
+    test_merged.reset_index(drop = True, inplace = True)
+
+    # Tracking results
+    test_merged['Team1_Bet'] = 0
+    test_merged['Team2_Bet'] = 0
+    test_merged['Money_Tracker'] = 0
+    test_merged['Bet_Won'] = 0
+    for index, row in test_merged.iterrows():
+        payoff1 = 0
+        payoff2 = 0
+        if index == 0:
+
+             # Passing over rows where there is no/small perceived advatage
+            if (row.Team1_KC == 0) & (row.Team2_KC == 0):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital
+                continue
+            if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<small_advantage)) | ((row.Team1_Prob_Diff<small_advantage) & (row.Team2_Prob_Diff<0)):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital
+                continue
+
+            # Setting bet amount
+            if row.Team1_KC>0:
+                test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
+            if row.Team2_KC>0:
+                test_merged.loc[index, 'Team2_Bet'] = starting_capital*row.Team2_KC
+        
+            # Setting payoffs
+            if test_merged.loc[index, 'Team1_Bet']>0:
+                if row.Team1_ML<0:
+                    payoff1 = (test_merged.loc[index, 'Team1_Bet']/abs(row.Team1_ML))*100
+                if row.Team1_ML>0:
+                    payoff1 = test_merged.loc[index, 'Team1_Bet'] * (row.Team1_ML/100)
+            if test_merged.loc[index, 'Team2_Bet']>0:
+                if row.Team2_ML<0:
+                    payoff2 = (test_merged.loc[index, 'Team2_Bet']/abs(row.Team2_ML))*100
+                if row.Team2_ML>0:
+                    payoff2 = test_merged.loc[index, 'Team2_Bet'] *(row.Team2_ML/100)
+
+            # Passing over huge favorites/underdogs
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<ml_param):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital
+                continue
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team2_ML<ml_param):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital
+                continue
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML>ml_param_underdog):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital
+                continue
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team2_ML>ml_param_underdog):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital
+                continue
+        
+            # Updating total amount of money based on results
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_Won == 1):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital + payoff1
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_Won == 0):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital + payoff2
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_Won == 0):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital - test_merged.loc[index, 'Team1_Bet']
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_Won == 1):
+                test_merged.loc[index, 'Money_Tracker'] = starting_capital - test_merged.loc[index, 'Team2_Bet']
+    
+        else:
+
+             # Passing over rows where there is no/small perceived advatage
+            if (row.Team1_KC == 0) & (row.Team2_KC == 0):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+                continue
+            if ((row.Team1_Prob_Diff<0) & (row.Team2_Prob_Diff<small_advantage)) | ((row.Team1_Prob_Diff<small_advantage) & (row.Team2_Prob_Diff<0)):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+                continue
+            
+            # Setting bet amount
+            dates = list(test_merged.Date.unique())
+            if fixed_capital:
+                if row.Team1_KC>0:
+                    test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
+                if row.Team2_KC>0:
+                    test_merged.loc[index, 'Team2_Bet'] = starting_capital*row.Team2_KC
+            # else:
+            #     if row.Team1_KC>0:
+            #         if row.Date == dates[0]:
+            #             test_merged.loc[index, 'Team1_Bet'] = starting_capital*row.Team1_KC
+            #         else:
+            #             yesterday_index = dates.index(row.Date)-1
+            #             yesterday = dates[yesterday_index]
+            #             yesterday_df = test_merged.loc[test_merged.Date==yesterday, :]
+            #             yesterday_df.reset_index(drop = True, inplace = True)
+            #             bet_capital = yesterday_df.loc[len(yesterday_df)-1, 'Money_Tracker']
+            #             test_merged.loc[index, 'Team1_Bet'] = bet_capital*row.Team1_KC
+            #     if row.Team2_KC>0:
+            #         if row.Date == dates[0]:
+            #             test_merged.loc[index, 'Team2_Bet'] = starting_capital*row.Team2_KC
+            #         else:
+            #             yesterday_index = dates.index(row.Date)-1
+            #             yesterday = dates[yesterday_index]
+            #             yesterday_df = test_merged.loc[test_merged.Date==yesterday, :]
+            #             yesterday_df.reset_index(drop = True, inplace = True)
+            #             bet_capital = yesterday_df.loc[len(yesterday_df)-1, 'Money_Tracker']
+            #             test_merged.loc[index, 'Team2_Bet'] = bet_capital*row.Team2_KC
+            else:
+                if row.Team1_KC>0:
+                    test_merged.loc[index, 'Team1_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team1_KC
+                if row.Team2_KC>0:
+                    test_merged.loc[index, 'Team2_Bet'] = test_merged.loc[(index-1), 'Money_Tracker']*row.Team2_KC
+
+            # Setting payoffs
+            if test_merged.loc[index, 'Team1_Bet']>0:
+                if row.Team1_ML<0:
+                    payoff1 = (test_merged.loc[index, 'Team1_Bet']/abs(row.Team1_ML))*100
+                if row.Team1_ML>0:
+                    payoff1 = test_merged.loc[index, 'Team1_Bet'] * (row.Team1_ML/100)
+            if test_merged.loc[index, 'Team2_Bet']>0:
+                if row.Team2_ML<0:
+                    payoff2 = (test_merged.loc[index, 'Team2_Bet']/abs(row.Team2_ML))*100
+                if row.Team2_ML>0:
+                    payoff2 = test_merged.loc[index, 'Team2_Bet'] *(row.Team2_ML/100)
+            
+            # Passing over huge favorites/underdogs
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML<ml_param):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+                continue
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team2_ML<ml_param):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+                continue
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_ML>ml_param_underdog):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+                continue
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team2_ML>ml_param_underdog):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker']
+                continue
+            
+            # Updating total amount of money based on results
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_Won == 1):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker'] + payoff1
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_Won == 0):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker'] + payoff2
+            if (test_merged.loc[index, 'Team1_Bet']>0) & (row.Team1_Won == 0):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker'] - test_merged.loc[index, 'Team1_Bet']
+            if (test_merged.loc[index, 'Team2_Bet']>0) & (row.Team1_Won == 1):
+                test_merged.loc[index, 'Money_Tracker'] = test_merged.loc[(index-1), 'Money_Tracker'] - test_merged.loc[index, 'Team2_Bet']
+    
+    # Tracking binary bet result
+    for index, row in test_merged.iterrows():
+        if index>0:
+            last_game_capital = test_merged.loc[(index-1), 'Money_Tracker']
+            if row.Money_Tracker>last_game_capital:
+                test_merged.loc[index, 'Bet_Won'] = 1
+            else:
+                pass
+            if row.Money_Tracker==last_game_capital:
+                test_merged.loc[index, 'Bet_Won'] = -1
+        if index==0:
+            if row.Money_Tracker>starting_capital:
+                test_merged.loc[index, 'Bet_Won'] = 1
+            else:
+                pass
+            if row.Money_Tracker==starting_capital:
+                test_merged.loc[index, 'Bet_Won'] = -1
+
+    # Saving file if save_file argument is true
+    if save_file:
+        test_merged.to_csv('Model_Build/data/test_nn_'+str(year)+'.csv')
         return test_merged
     else:
         return test_merged
@@ -351,9 +600,9 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-backtester = backtesting(year = 2013, starting_capital = 100000, ml_param = -1750, ml_param_underdog = 1000,
+backtester = backtesting_nn(year = 2018, starting_capital = 100000, ml_param = -1750, ml_param_underdog = 1000,
  small_advantage =  .025, kelly = 12, fixed_capital = False, save_file=True)
-#print(backtester.tail(200))
+print(backtester.tail(10))
 
 
 ##########OPTIMIZING PARAMETERS##########
