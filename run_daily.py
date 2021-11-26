@@ -19,11 +19,11 @@ from current_season_code.functions import *
 
 ##########NECESSARY VARIABLES##########
 
-todays_capital = 99481
-yesterdays_capital = 99481
+todays_capital = 93017
+yesterdays_capital = 93017
 year = 2021
-continue_value_advanced = 267
-continue_value_traditional = 267
+continue_value_advanced = 280
+continue_value_traditional = 280
 ml_param = -1750
 ml_param_underdog = 1000
 small_advantage = .025
