@@ -846,8 +846,18 @@ def retrieve_odds(save):
         away_team = teams[0]
         home_team = teams[1]
         ml_string = row['Unnamed: 4']
-        ml_away = ml_string[11:15]
-        ml_home = ml_string[-6:-2]
+        if len(ml_string) == 34:
+            ml_away = ml_string[11:15]
+            ml_home = ml_string[-6:-2]
+        if len(ml_string) != 34:
+            ml_string = ml_string.replace('Right Arrow', '')
+            ml_string = ml_string.replace('ML', '')
+            if (ml_string[4] == '+') | (ml_string[4]=='-'):
+                ml_away = ml_string[:4]
+                ml_home = ml_string[4:]
+            else:
+                ml_away = ml_string[:5]
+                ml_home = ml_string[5:]
         try:
             ml_away = float(ml_away)
         except:
@@ -1012,6 +1022,280 @@ def calculate_bet_results(yesterdays_capital):
 
     # yesterdays_bets.to_csv('current_season_data/results_tracker.csv')
     old_results = pd.read_csv('current_season_data/results_tracker.csv', index_col = 0)
+    results = old_results.append(yesterdays_bets)
+    results.to_csv('current_season_data/results_tracker.csv')
+    return
+
+def calculate_bets_external(todays_capital_538, todays_capital_combined, ml_param, ml_param_underdog, small_advantage):
+    
+    def kc(row, Home):
+        if Home:
+            diff = row.Home_Prob - row.Home_Prob_Implied
+            if diff < 0:
+                return 0
+            else:
+                p = row.Home_Prob
+                q = 1-p
+                ml = row.Home_Odds
+                if ml>=0:
+                    b = (ml/100)
+                if ml<0:
+                    b = (100/abs(ml))
+                kc = ((p*b) - q) / b
+                return (kc/8.0)
+        else:
+            diff_away = row.Away_Prob - row.Away_Prob_Implied
+            if diff_away < 0:
+                return 0
+            else:
+                p = row.Away_Prob
+                q = 1-p
+                ml = row.Away_Odds
+                if ml>=0:
+                    b = (ml/100)
+                if ml<0:
+                    b = (100/abs(ml))
+                kc = ((p*b) - q) / b
+                return (kc/8.0)
+
+    def kc_combined(row, Home):
+        if Home:
+            diff = row.Home_Prob_Combined - row.Home_Prob_Implied
+            if diff < 0:
+                return 0
+            else:
+                p = row.Home_Prob_Combined
+                q = 1-p
+                ml = row.Home_Odds
+                if ml>=0:
+                    b = (ml/100)
+                if ml<0:
+                    b = (100/abs(ml))
+                kc = ((p*b) - q) / b
+                return (kc/8.0)
+        else:
+            diff_away = row.Away_Prob_Combined - row.Away_Prob_Implied
+            if diff_away < 0:
+                return 0
+            else:
+                p = row.Away_Prob_Combined
+                q = 1-p
+                ml = row.Away_Odds
+                if ml>=0:
+                    b = (ml/100)
+                if ml<0:
+                    b = (100/abs(ml))
+                kc = ((p*b) - q) / b
+                return (kc/8.0)
+    
+    tables = pd.read_html('https://projects.fivethirtyeight.com/2022-nba-predictions/games/')
+    fivethirtyeight_data = pd.DataFrame(columns = ['Date', 'Away_Team', 'Away_Prob', 'Home_Team', 'Home_Prob'])
+    for i, table in enumerate(tables):
+        if i == 0:
+            continue
+        if i > 30:
+            break
+        if i % 2 == 0:
+            matchup_data = table.iloc[:, [2,4]]
+            matchup_data.drop(2, axis = 0, inplace = True)
+            matchup_data.columns = ['Teams', 'Probability']
+            away_team = matchup_data.loc[0, 'Teams']
+            away_prob = matchup_data.loc[0, 'Probability']
+            home_team = matchup_data.loc[1, 'Teams']
+            home_prob = matchup_data.loc[1, 'Probability']
+            date = dt.date.today()
+            data_series = pd.Series([date, away_team, away_prob, home_team, home_prob], index = fivethirtyeight_data.columns)
+            fivethirtyeight_data = fivethirtyeight_data.append(data_series, ignore_index = True)
+    odds = pd.read_csv('current_season_data/yesterday_odds.csv', index_col = 0)
+    merged = pd.merge(fivethirtyeight_data, odds, on = ['Home_Team', 'Away_Team'])
+    merged.columns = ['Date', 'Away_Team', 'Away_Prob', 'Home_Team', 'Home_Prob', 'Home_Odds', 'Away_Odds', 
+                    'drop', 'Home_Prob_Implied', 'Away_Prob_Implied']
+    merged.drop(['drop'], axis = 1, inplace = True)
+    merged['Away_Prob'] = merged.Away_Prob.str.strip('%')
+    merged['Away_Prob'] = merged.Away_Prob.astype(float)
+    merged['Away_Prob'] = merged.Away_Prob/100
+    merged['Home_Prob'] = merged.Home_Prob.str.strip('%')
+    merged['Home_Prob'] = merged.Home_Prob.astype(float)
+    merged['Home_Prob'] = merged.Home_Prob/100
+    merged['Home_Prob_Implied'] = merged.Home_Prob_Implied/100
+    merged['Away_Prob_Implied'] = merged.Away_Prob_Implied/100
+    merged['Home_KC'] = merged.apply(kc, axis = 1, Home = True)
+    merged['Away_KC'] = merged.apply(kc, axis = 1, Home = False)
+    merged['Home_Bet'] = 0
+    merged['Away_Bet'] = 0
+    merged['Home_Payoff'] = 0
+    merged['Away_Payoff'] = 0
+
+    for index, row in merged.iterrows():
+        if (row.Home_KC == 0) & (row.Away_KC == 0):
+            merged.loc[index, 'Home_Bet'] = 0
+            merged.loc[index, 'Away_Bet'] = 0
+            continue
+        if (((row.Home_Prob - row.Home_Prob_Implied)<0) & ((row.Away_Prob - row.Away_Prob_Implied)<small_advantage)) | (((row.Home_Prob - row.Home_Prob_Implied)<small_advantage) & ((row.Away_Prob - row.Away_Prob_Implied)<0)):
+            merged.loc[index, 'Home_Bet'] = 0
+            merged.loc[index, 'Away_Bet'] = 0
+            continue
+            
+        if row.Home_KC>0:
+            merged.loc[index, 'Home_Bet'] = todays_capital_538*row.Home_KC
+        if row.Away_KC>0:
+            merged.loc[index, 'Away_Bet'] = todays_capital_538*row.Away_KC
+            
+        if merged.loc[index, 'Home_Bet']>0:
+            if row.Home_Odds<0:
+                merged.loc[index, 'Home_Payoff'] = (merged.loc[index, 'Home_Bet']/abs(row.Home_Odds))*100
+            if row.Home_Odds>0:
+                merged.loc[index, 'Home_Payoff'] = merged.loc[index, 'Home_Bet'] * (row.Home_Odds/100)
+        if merged.loc[index, 'Away_Bet']>0:
+            if row.Away_Odds<0:
+                merged.loc[index, 'Away_Payoff'] = (merged.loc[index, 'Away_Bet']/abs(row.Away_Odds))*100
+            if row.Away_Odds>0:
+                merged.loc[index, 'Away_Payoff'] = merged.loc[index, 'Away_Bet'] * (row.Away_Odds/100)
+
+        if (merged.loc[index, 'Home_Bet']>0) & (row.Home_Odds<ml_param):
+            merged.loc[index, 'Home_Bet'] = 0
+            merged.loc[index, 'Home_Payoff'] = 0
+            continue
+        if (merged.loc[index, 'Away_Bet']>0) & (row.Away_Odds<ml_param):
+            merged.loc[index, 'Away_Bet'] = 0
+            merged.loc[index, 'Away_Payoff'] = 0
+            continue
+        if (merged.loc[index, 'Home_Bet']>0) & (row.Home_Odds>ml_param_underdog):
+            merged.loc[index, 'Home_Bet'] = 0
+            merged.loc[index, 'Home_Payoff'] = 0
+            continue
+        if (merged.loc[index, 'Away_Bet']>0) & (row.Away_Odds>ml_param_underdog):
+            merged.loc[index, 'Away_Bet'] = 0
+            merged.loc[index, 'Away_Payoff'] = 0
+            continue
+    
+
+    bets = pd.read_csv('current_season_data/bets.csv', index_col = 0)
+    bets_small = bets[['Team1', 'Team2', 'Team1_Prob', 'Team2_Prob']]
+    merged_2 = pd.merge(merged, bets_small, left_on = ['Home_Team', 'Away_Team'], right_on = ['Team1', 'Team2'])
+    merged_2.drop(['Team1', 'Team2'], axis = 1, inplace = True)
+    merged_2.columns
+    merged_2.columns = ['Date', 'Away_Team', 'Away_Prob_538', 'Home_Team', 'Home_Prob_538', 'Home_Odds',
+        'Away_Odds', 'Home_Prob_Implied', 'Away_Prob_Implied', 'Home_KC',
+        'Away_KC', 'Home_Bet', 'Away_Bet', 'Home_Payoff', 'Away_Payoff',
+        'Home_Prob_Prop', 'Away_Prob_Prop']
+    merged_2['Home_Prob_Combined'] = (merged_2.Home_Prob_538 + merged_2.Home_Prob_Prop)/2
+    merged_2['Away_Prob_Combined'] = (merged_2.Away_Prob_538 + merged_2.Away_Prob_Prop)/2
+    merged_2['Home_KC_Combined'] = merged_2.apply(kc_combined, axis = 1, Home = True)
+    merged_2['Away_KC_Combined'] = merged_2.apply(kc_combined, axis = 1, Home = False)
+    merged_2['Home_Bet_Combined'] = 0
+    merged_2['Away_Bet_Combined'] = 0
+    merged_2['Home_Payoff_Combined'] = 0
+    merged_2['Away_Payoff_Combined'] = 0
+    for index, row in merged_2.iterrows():
+        if (row.Home_KC_Combined == 0) & (row.Away_KC_Combined == 0):
+            merged_2.loc[index, 'Home_Bet_Combined'] = 0
+            merged_2.loc[index, 'Away_Bet_Combined'] = 0
+            continue
+        if (((row.Home_Prob_Combined - row.Home_Prob_Implied)<0) & ((row.Away_Prob_Combined - row.Away_Prob_Implied)<small_advantage)) | (((row.Home_Prob_Combined - row.Home_Prob_Implied)<small_advantage) & ((row.Away_Prob_Combined - row.Away_Prob_Implied)<0)):
+            merged_2.loc[index, 'Home_Bet_Combined'] = 0
+            merged_2.loc[index, 'Away_Bet_Combined'] = 0
+            continue
+            
+        if row.Home_KC_Combined>0:
+            merged_2.loc[index, 'Home_Bet_Combined'] = todays_capital_combined*row.Home_KC_Combined
+        if row.Away_KC_Combined>0:
+            merged_2.loc[index, 'Away_Bet_Combined'] = todays_capital_combined*row.Away_KC_Combined
+            
+        if merged_2.loc[index, 'Home_Bet_Combined']>0:
+            if row.Home_Odds<0:
+                merged_2.loc[index, 'Home_Payoff_Combined'] = (merged_2.loc[index, 'Home_Bet_Combined']/abs(row.Home_Odds))*100
+            if row.Home_Odds>0:
+                merged_2.loc[index, 'Home_Payoff_Combined'] = merged_2.loc[index, 'Home_Bet_Combined'] * (row.Home_Odds/100)
+        if merged_2.loc[index, 'Away_Bet_Combined']>0:
+            if row.Away_Odds<0:
+                merged_2.loc[index, 'Away_Payoff_Combined'] = (merged_2.loc[index, 'Away_Bet_Combined']/abs(row.Away_Odds))*100
+            if row.Away_Odds>0:
+                merged_2.loc[index, 'Away_Payoff_Combined'] = merged_2.loc[index, 'Away_Bet_Combined'] * (row.Away_Odds/100)
+
+        if (merged_2.loc[index, 'Home_Bet_Combined']>0) & (row.Home_Odds<ml_param):
+            merged_2.loc[index, 'Home_Bet_Combined'] = 0
+            merged_2.loc[index, 'Home_Payoff_Combined'] = 0
+            continue
+        if (merged_2.loc[index, 'Away_Bet_Combined']>0) & (row.Away_Odds<ml_param):
+            merged_2.loc[index, 'Away_Bet_Combined'] = 0
+            merged_2.loc[index, 'Away_Payoff_Combined'] = 0
+            continue
+        if (merged_2.loc[index, 'Home_Bet_Combined']>0) & (row.Home_Odds>ml_param_underdog):
+            merged_2.loc[index, 'Home_Bet_Combined'] = 0
+            merged_2.loc[index, 'Home_Payoff_Combined'] = 0
+            continue
+        if (merged_2.loc[index, 'Away_Bet_Combined']>0) & (row.Away_Odds>ml_param_underdog):
+            merged_2.loc[index, 'Away_Bet_Combined'] = 0
+            merged_2.loc[index, 'Away_Payoff_Combined'] = 0
+            continue
+    merged_2.to_csv('current_season_data/bets_external.csv')
+    return
+
+def calculate_bet_results_external(yesterdays_capital_538, yesterdays_capital_combined):
+    yesterdays_bets = pd.read_csv('current_season_data/bets_external.csv', index_col = 0)
+    formatted_data = pd.read_csv('current_season_data/formatted_data_1.csv', index_col = 0)
+    yesterday = dt.date.today() - dt.timedelta(days = 1)
+    yesterday = str(yesterday)
+    yesterdays_games = formatted_data[formatted_data.Date==yesterday]
+    yesterdays_winners = list()
+    for index, row in yesterdays_games.iterrows():
+        if row.PTS>row.PTS_Opp:
+            yesterdays_winners.append(row.Team)
+        else:
+            yesterdays_winners.append(row.Team_Opp)
+    results = pd.DataFrame()
+    yesterdays_bets['Won_Bet_538'] = 0
+    yesterdays_bets['Money_Tracker_538'] = 0
+    yesterdays_bets['Won_Bet_Combined'] = 0
+    yesterdays_bets['Money_Tracker_Combined'] = 0
+    for index, row in yesterdays_bets.iterrows():
+        if (row.Home_Bet<=0) & (row.Away_Bet<=0):
+            yesterdays_bets.loc[index, 'Won_Bet_538'] = -1
+        if row.Home_Bet>0:
+            if row.Home_Team in yesterdays_winners:
+                yesterdays_bets.loc[index, 'Won_Bet_538'] = 1
+        if row.Away_Bet>0:
+            if row.Away_Team in yesterdays_winners:
+                yesterdays_bets.loc[index, 'Won_Bet_538'] = 1
+        if index==0:
+            if yesterdays_bets.loc[index, 'Won_Bet_538']==1:
+                yesterdays_bets.loc[index, 'Money_Tracker_538'] = yesterdays_capital_538 + row.Home_Payoff + row.Away_Payoff
+            else:
+                yesterdays_bets.loc[index, 'Money_Tracker_538'] = yesterdays_capital_538 - row.Home_Bet - row.Away_Bet
+        else:
+            if yesterdays_bets.loc[index, 'Won_Bet_538']==1:
+                yesterdays_bets.loc[index, 'Money_Tracker_538'] = yesterdays_bets.loc[(index-1), 'Money_Tracker_538'] + row.Home_Payoff + row.Away_Payoff
+            else:
+                yesterdays_bets.loc[index, 'Money_Tracker_538'] = yesterdays_bets.loc[(index-1), 'Money_Tracker_538'] - row.Home_Bet - row.Away_Bet
+
+    for index, row in yesterdays_bets.iterrows():
+        if (row.Home_Bet_Combined<=0) & (row.Away_Bet_Combined<=0):
+            yesterdays_bets.loc[index, 'Won_Bet_Combined'] = -1
+        if row.Home_Bet_Combined>0:
+            if row.Home_Team in yesterdays_winners:
+                yesterdays_bets.loc[index, 'Won_Bet_Combined'] = 1
+        if row.Away_Bet_Combined>0:
+            if row.Away_Team in yesterdays_winners:
+                yesterdays_bets.loc[index, 'Won_Bet_Combined'] = 1
+        if index==0:
+            if yesterdays_bets.loc[index, 'Won_Bet_Combined']==1:
+                yesterdays_bets.loc[index, 'Money_Tracker_Combined'] = yesterdays_capital_combined + row.Home_Payoff_Combined + row.Away_Payoff_Combined
+            else:
+                yesterdays_bets.loc[index, 'Money_Tracker_Combined'] = yesterdays_capital_combined - row.Home_Bet_Combined - row.Away_Bet_Combined
+        else:
+            if yesterdays_bets.loc[index, 'Won_Bet_Combined']==1:
+                yesterdays_bets.loc[index, 'Money_Tracker_Combined'] = yesterdays_bets.loc[(index-1), 'Money_Tracker_Combined'] + row.Home_Payoff_Combined + row.Away_Payoff_Combined
+            else:
+                yesterdays_bets.loc[index, 'Money_Tracker_Combined'] = yesterdays_bets.loc[(index-1), 'Money_Tracker_Combined'] - row.Home_Bet_Combined - row.Away_Bet_Combined
+
+    string = f"Today's 538 capital is {yesterdays_bets.loc[len(yesterdays_bets)-1, 'Money_Tracker_538']}"
+    print(string)
+
+    string = f"Today's combined capital is {yesterdays_bets.loc[len(yesterdays_bets)-1, 'Money_Tracker_Combined']}"
+    print(string)
+
+    old_results = pd.read_csv('current_season_data/results_tracker_external.csv', index_col = 0)
     results = old_results.append(yesterdays_bets)
     results.to_csv('current_season_data/results_tracker.csv')
     return
