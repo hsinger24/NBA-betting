@@ -880,7 +880,7 @@ def retrieve_odds(save):
 
 def calculate_bets(todays_capital, ml_param, ml_param_underdog, small_advantage, kelly):
     prob_output = pd.read_csv('current_season_data/todays_stats.csv', index_col = 0)
-    odds = retrieve_odds(save = False)
+    odds = pd.read_csv('current_season_data/yesterday_odds.csv')
     def kelly_criterion(row):
         if row['Team1_Prob_Diff'] < 0:
             return 0
@@ -1297,5 +1297,5 @@ def calculate_bet_results_external(yesterdays_capital_538, yesterdays_capital_co
 
     old_results = pd.read_csv('current_season_data/results_tracker_external.csv', index_col = 0)
     results = old_results.append(yesterdays_bets)
-    results.to_csv('current_season_data/results_tracker.csv')
+    results.to_csv('current_season_data/results_tracker_external.csv')
     return
