@@ -20,8 +20,8 @@ from current_season_code.functions import *
 ##########NECESSARY VARIABLES##########
 
 year = 2021
-continue_value_advanced = 428
-continue_value_traditional = 428
+continue_value_advanced = 433
+continue_value_traditional = 433
 ml_param = -1750
 ml_param_underdog = 1000
 small_advantage = .025
