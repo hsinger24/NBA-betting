@@ -124,6 +124,7 @@ def format_api_data(year):
         'NET_RATING', 'AST_PCT', 'AST_TOV', 'AST_RATIO', 'OREB_PCT', 'DREB_PCT',
         'REB_PCT', 'E_TM_TOV_PCT', 'TM_TOV_PCT', 'EFG_PCT', 'TS_PCT', 'USG_PCT',
         'E_USG_PCT', 'E_PACE', 'PACE', 'PACE_PER40', 'POSS', 'PIE', 'Date']
+
     # Joining data to itself to have one row per game
     evens = merged.iloc[::2]
     evens.reset_index(drop = True, inplace = True)
@@ -139,15 +140,10 @@ def format_api_data(year):
     final['Team_2_losses'] = 0
     record_dict = {}
     teams = set(list(final.TEAM_NAME_x.unique()) + list(final.TEAM_NAME_y.unique()))
-    #teams += ['Hawks']
     for team in teams:
         record_dict[team + '_wins'] = 0.0
         record_dict[team + '_losses'] = 0.0
     for index, row in final.iterrows():
-        # final.loc[index, 'Team_1_wins'] = record_dict[row.TEAM_NAME_x + "_wins"]
-        # final.loc[index, 'Team_1_losses'] = record_dict[row.TEAM_NAME_x + "_losses"]
-        # final.loc[index, 'Team_2_wins'] = record_dict[row.TEAM_NAME_y + "_wins"]
-        # final.loc[index, 'Team_2_losses'] = record_dict[row.TEAM_NAME_y + "_losses"]
         if row.PTS_x>row.PTS_y:
             record_dict[row.TEAM_NAME_x + "_wins"] += 1.0
             record_dict[row.TEAM_NAME_y + "_losses"] += 1.0
@@ -184,7 +180,18 @@ def format_api_data(year):
     return final
 
 def formatted_data_1(formatted_api_data):
+    '''
+    Further reformats the column names and merges with the odds table
+    Params:
+        - formatted_api_data: combined advanced/traditional API stats for that game
+    Returns:
+        - Game's data merged with odds for that game
+    '''
+
+    # Calling in previously formatted data
     existing_data = pd.read_csv('current_season_data/formatted_data_1.csv', index_col = 0)
+
+    # Adjusting the column names of previous step formatting (API)
     formatted_api_data.drop_duplicates(subset = ['GAME_ID_x'], inplace = True)
     formatted_api_data.reset_index(drop = True, inplace = True)
     columns = list(formatted_api_data.columns)
@@ -209,11 +216,17 @@ def formatted_data_1(formatted_api_data):
         'Wins', 'Losses', 'Wins_Opp', 'Losses_Opp',
         'Win_Pct', 'Win_Pct_Opp']
     data.columns = columns
+
+    # Calling in the odds for yesterday's games
     odds_yesterday = pd.read_csv('current_season_data/yesterday_odds.csv', index_col = 0)
     odds_yesterday['GAME_ID'] = 0
+
+    # Subsetting API formatted data to only include yesterday's games
     yesterday = dt.date.today() - dt.timedelta(days = 1)
     yesterday = str(yesterday)
     yesterday_formatted = data[data.Date==yesterday]
+
+    # Getting correct GAME_ID for yesterday's odds to merge with data
     teams = list(yesterday_formatted['TEAM_NAME'])
     teams_opp = list(yesterday_formatted['TEAM_NAME_Opp'])
     for index, row in odds_yesterday.iterrows():
@@ -227,6 +240,8 @@ def formatted_data_1(formatted_api_data):
             team = teams[location]
             game_id = yesterday_formatted[yesterday_formatted.TEAM_NAME==team]['GAME_ID'].values[0]
             odds_yesterday.loc[index, 'GAME_ID'] = game_id
+
+    # Merging odds with data and adjusting column names
     merged = pd.merge(yesterday_formatted, odds_yesterday, on = 'GAME_ID')
     columns = list(merged.columns)
     merged = merged[['GAME_ID', 'Date_x', 'Away_Team', 'Home_Odds', 'Home_Team', 'Away_Odds']+columns[1:-7]]
@@ -244,12 +259,20 @@ def formatted_data_1(formatted_api_data):
         'E_PACE_Opp', 'PACE_Opp', 'PACE_PER40_Opp', 'POSS_Opp', 'PIE_Opp', 'Wins', 'Losses', 'Wins_Opp', 'Losses_Opp',
         'Win_Pct', 'Win_Pct_Opp']
     merged.drop(['drop_1', 'drop_2', 'drop_3'], axis = 1, inplace = True)
+
+    # Appending yesterday's data with season up to this point and re-writing file
     final = existing_data.append(merged)
     final.reset_index(drop = True, inplace = True)
     final.to_csv('current_season_data/formatted_data_1.csv')
     return final
 
 def formatted_data_2():
+    '''
+    Takes in formatted API data merged with odds, adds additional stats + cumulative stats
+    Returns:
+        - Stats formatted in their final form
+    '''
+
     team_map = {
     'WAS' : 'Wizards',
     'BOS' : 'Celtics',
@@ -282,6 +305,8 @@ def formatted_data_2():
     'LAC' : 'Clippers',
     'HOU' : 'Rockets'
     }
+
+    # Add B2B, days rest, home stats to formatted API data
     test = pd.read_csv('current_season_data/formatted_data_1.csv', index_col = 0)
     test['Date'] = pd.to_datetime(test.Date)
     test['is_B2B'] = 0
@@ -343,6 +368,8 @@ def formatted_data_2():
                 test.loc[index, 'is_B2B_First'] = 1
         else:
             continue
+    
+    # Adding same B2B, home, rest stats for the opponent
     for index, row in test.iterrows():
         team_Opp = row.Team_Opp
         df_1 = test[(test.Team == team_Opp) | (test.Team_Opp == team_Opp)]
@@ -381,6 +408,8 @@ def formatted_data_2():
                 test.loc[index, 'is_B2B_First_Opp'] = 1
         else:
             continue
+    
+    # Reformatting columns
     test = test[['Game_ID', 'Date', 'Team', 'Team_Opp', 'FGM', 'FGA', 'FG_PCT', 'FG3M', 'FG3A', 'FG3_PCT', 'FTM', 'FTA','FT_PCT', 'OREB',
     'DREB','REB', 'AST', 'STL', 'BLK', 'TO', 'PF', 'PTS', 'PLUS_MINUS', 'E_OFF_RATING', 'OFF_RATING', 'E_DEF_RATING',
     'DEF_RATING', 'E_NET_RATING', 'NET_RATING', 'AST_PCT', 'AST_TOV', 'AST_RATIO', 'OREB_PCT', 'DREB_PCT', 'REB_PCT',
