@@ -25,9 +25,9 @@ data$Team1_is_B2B_Second_Opp = factor(as.character(data$Team1_is_B2B_Second_Opp)
 data$Team1_is_Home_Opp = factor(as.character(data$Team1_is_Home_Opp), levels = c('0','1'), labels = c('N', 'Y'))
 # Getting training data
 
-# train = (Game_ID<21800001)
-# training_data = data[train, ]
-# training_data = subset(training_data, select = -c(1,2,3,4,106))
+train = (Game_ID<21800001)
+training_data = data[train, ]
+training_data = subset(training_data, select = -c(1,2,3,4,106))
 training_data = subset(data, select = -c(1,2,3,4,106))
 training_target = Team1_Won
 training_target = factor(as.character(training_target), levels = c('0','1'), labels = c('L', 'W'))
@@ -53,7 +53,8 @@ logistic = train(training_data,
       family=binomial())
 predictions_logistic = predict(object = logistic, test_data, type = 'raw')
 prediction_accuracy_logistic = mean(predictions_logistic == test_target) # 65.5%
-saveRDS(logistic, 'logistic_model.rds')
+# saveRDS(logistic, 'logistic_model.rds')
+
 # Random Forest
 forest = train(training_data,
                training_target,
@@ -61,6 +62,7 @@ forest = train(training_data,
                method='rf')
 predictions_forest = predict(object = forest, test_data, type = 'raw')
 prediction_accuracy_forest = mean(predictions_forest == test_target) # 61.5%
+
 # XGBOOST
 xg = train(training_data,
                training_target,
@@ -68,6 +70,7 @@ xg = train(training_data,
                method='xgbTree')
 predictions_xg = predict(object = xg, test_data, type = 'raw')
 prediction_accuracy_xg = mean(predictions_xg == test_target) # Did not work
+
 # Bagged AdaBoost
 adaBag = train(training_data,
                training_target,
@@ -75,6 +78,7 @@ adaBag = train(training_data,
                method='AdaBag')
 predictions_adaBag = predict(object = adaBag, test_data, type = 'raw')
 prediction_accuracy_adaBag = mean(predictions_adaBag == test_target) # 64.3%
+
 # Bayesian Additive Regression Trees
 bartMachine = train(training_data,
                training_target,
@@ -82,6 +86,7 @@ bartMachine = train(training_data,
                method='bartMachine')
 predictions_bartMachine = predict(object = bartMachine, test_data, type = 'raw')
 prediction_accuracy_bartMachine= mean(predictions_bartMachine == test_target) # Did not work
+
 # Diagonal Discriminant Analysis
 dda = train(training_data,
             training_target,
@@ -89,6 +94,7 @@ dda = train(training_data,
             method='dda')
 predictions_dda = predict(object = dda, test_data, type = 'raw')
 prediction_accuracy_dda= mean(predictions_dda == test_target) # Did not work
+
 # C4.5-like Trees
 c_trees = train(training_data,
                 training_target,
@@ -96,6 +102,7 @@ c_trees = train(training_data,
                 method='J48')
 predictions_c_trees = predict(object = c_trees, test_data, type = 'raw')
 prediction_accuracy_c_trees= mean(predictions_c_trees == test_target) # 64%
+
 # Tree Augmented Naive Bayes Classifier with Attribute Weighting
 awtan = train(training_data,
               training_target,
@@ -103,6 +110,7 @@ awtan = train(training_data,
               method='awtan')
 predictions_awtan = predict(object = awtan, test_data, type = 'raw')
 prediction_accuracy_awtan= mean(predictions_awtan == test_target) # Did not work
+
 # Stochastic Gradient Boosting
 gbm = train(training_data,
             training_target,
@@ -111,6 +119,7 @@ gbm = train(training_data,
 predictions_gbm = predict(object = gbm, test_data, type = 'raw')
 prediction_accuracy_gbm= mean(predictions_gbm == test_target) # 66.3
 saveRDS(gbm, 'gbm_model.rds')
+
 ##### Stacked AutoEncoder Deep Neural Network #####
 # Formatting data for DNN (Training)
 training_data_dnn = data.frame(training_data)

@@ -34,3 +34,4 @@ all_data_today <- all_data_today %>%
   mutate(Team1_Prob = predict(object = model, inputs, type = 'raw'))
 
 write.csv(all_data_today, 'current_season_data/todays_stats.csv')
+
