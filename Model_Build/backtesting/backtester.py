@@ -115,7 +115,7 @@ def backtesting(year, starting_capital, ml_param, ml_param_underdog, small_advan
             else:
                 return kc/kelly
     # Creating necessary columns
-    test_merged = pd.read_csv('../data/test_merged_' + str(year) + '.csv', index_col = 0)
+    test_merged = pd.read_csv('Model_Build/data/test_merged_' + str(year) + '.csv', index_col = 0)
     test_merged['Team1_ML'] = 0
     test_merged['Team2_ML'] = 0
     for index, row in test_merged.iterrows():
@@ -600,9 +600,9 @@ def backtesting_bins(backtester, prob_calibration =  False, kc_bins = False):
         grouped = backtester.groupby(backtester['KC_Bins'])['Games_Winnings'].sum()
         return grouped
 
-backtester = backtesting_nn(year = 2018, starting_capital = 100000, ml_param = -1750, ml_param_underdog = 1000,
- small_advantage =  .025, kelly = 12, fixed_capital = False, save_file=True)
-print(backtester.tail(10))
+backtester = backtesting(year = 2018, starting_capital = 100000, ml_param = -1750, ml_param_underdog = 1000,
+ small_advantage =  .025, kelly = 12, fixed_capital = False, save_file=False)
+print(backtesting_win_pct(backtester))
 
 
 ##########OPTIMIZING PARAMETERS##########
